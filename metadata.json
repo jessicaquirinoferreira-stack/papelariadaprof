@@ -1,6 +1,6 @@
 {
-  "name": "Papelaria da Prof — Recursos Pedagógicos e Terapêuticos",
-  "description": "E-commerce de papelaria especializada em recursos pedagógicos e terapêuticos em São José do Rio Preto - SP para professores, terapeutas, pais e escolas.",
+  "name": "Papelaria da Prof",
+  "description": "Loja de recursos pedagógicos em PDF prontos para baixar e imprimir: Alfabetização, Português e Matemática do 1º ao 5º ano e materiais para professoras.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

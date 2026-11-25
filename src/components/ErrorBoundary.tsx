@@ -5,10 +5,7 @@ interface State {
   message: string;
 }
 
-export class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  State
-> {
+export class ErrorBoundary extends React.Component<{ children: React.ReactNode }, State> {
   constructor(props: { children: React.ReactNode }) {
     super(props);
     this.state = { hasError: false, message: '' };
@@ -17,25 +14,29 @@ export class ErrorBoundary extends React.Component<
   static getDerivedStateFromError(error: Error): State {
     return {
       hasError: true,
-      message: error?.message || 'Ocorreu um erro inesperado ao carregar esta seção.',
+      message: error?.message || 'Ocorreu um erro inesperado na aplicação.',
     };
   }
 
-  override render() {
+  componentDidCatch(error: Error, info: React.ErrorInfo): void {
+    console.error('ErrorBoundary caught:', error, info);
+  }
+
+  render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-[#FDF8F5] flex items-center justify-center p-6">
-          <div className="max-w-md w-full bg-white border border-[#EFE4DE] rounded-3xl p-8 text-center soft-card-shadow">
-            <h1 className="font-display text-xl font-bold text-[#3D2A24]">
-              Algo saiu do previsto
-            </h1>
-            <p className="mt-2 text-sm text-[#725B53] leading-relaxed">
-              Nosso ateliê digital encontrou uma instabilidade pontual. Tente recarregar a página.
+        <div className="min-h-screen bg-[#FFF9FB] flex items-center justify-center p-6">
+          <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-sm border-2 border-[#FCE1EE] text-center">
+            <h2 className="font-display text-2xl font-bold text-[#3A2E45] mb-3">
+              Ops, algo saiu do esperado
+            </h2>
+            <p className="text-sm text-[#675975] mb-6 leading-relaxed">
+              Não se preocupe, estamos aqui para ajudar. Tente recarregar a página para continuar sua navegação.
             </p>
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="mt-6 px-6 py-2.5 rounded-xl bg-[#6F4E42] text-white text-sm font-bold hover:bg-[#573B30] transition-colors"
+              className="px-6 py-3 rounded-2xl candy-btn-purple text-sm font-bold cursor-pointer"
             >
               Recarregar página
             </button>
@@ -43,6 +44,7 @@ export class ErrorBoundary extends React.Component<
         </div>
       );
     }
+
     return this.props.children;
   }
 }

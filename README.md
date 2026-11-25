@@ -1,89 +1,73 @@
-# Papelaria da Prof — Recursos Pedagógicos e Terapêuticos
+# Papelaria da Prof — E-commerce Pedagógico, Terapêutico & Área do Aluno
 
-E-commerce completo com vitrine responsiva, catálogo filtrável, cálculo de frete via CEP/Correios (PAC, SEDEX e Retirada em São José do Rio Preto - SP), checkout integrado ao WhatsApp (`wa.me`), PDV (Ponto de Venda) e Painel Administrativo conectado ao Firebase (Auth + Firestore) e Vercel Blob com compressão de mídia no servidor (`sharp`).
+Loja online completa especializada em recursos pedagógicos, materiais terapêuticos, planners docentes e apostilas digitais exclusivas, com **Área do Aluno** e **Painel Administrativo** integrados ao **Firebase Firestore & Authentication** e suporte a **Vercel Blob**.
 
 ---
 
-## Estrutura de Pastas
+## Principais Funcionalidades
 
-```text
-├── server.ts                  # Servidor Express + Vite + /api/upload (sharp + Vercel Blob) + ViaCEP/Frete
-├── firebase-blueprint.json    # Schema das coleções Firestore
-├── firestore.rules            # Regras de segurança endurecidas (produção)
-├── firebase-applet-config.json# Credenciais do projeto Firebase provisionado
-├── src/
-│   ├── components/            # Storefront, PDP, Carrinho, Checkout, Blog e Painel Admin
-│   ├── data/seedData.ts       # Catálogo inicial, cupons, pedidos exemplo e posts
-│   ├── hooks/useStore.ts      # Estado global sincronizado (Firestore + localStorage)
-│   ├── lib/
-│   │   ├── commerce.ts        # Cálculos de carrinho, cupons, frete, máscaras e WhatsApp
-│   │   ├── firebase.ts        # Inicialização Firebase App, Auth e Firestore
-│   │   └── firestoreService.ts# Camada de persistência Firestore
-│   └── types/store.ts         # Tipagens TypeScript
+- **Vitrine & Catálogo Completo**: Produtos físicos com filtro por categoria, busca, visualização rápida (Quick View) e página detalhada (PDP).
+- **Seção Exclusiva de Apostilas e PDFs**: Catálogo dedicado de materiais digitais com preview de páginas, descrição e entrega na Área do Aluno.
+- **Área do Aluno**:
+  - Cadastro completo (nome, e-mail, telefone, senha e confirmação) + **Login com Google**.
+  - Painel exclusivo com listagem das apostilas liberadas, botão de download direto do PDF, histórico de materiais e pedidos, e edição de perfil com busca automática de CEP.
+- **Checkout Inteligente + ViaCEP + WhatsApp**:
+  - Máscara automática de telefone e CEP.
+  - Consulta automática na API pública **ViaCEP** com cálculo de frete regional e faixa de frete grátis.
+  - Validação de cupons de desconto (`%` ou `R$`).
+  - Geração e envio automático do resumo completo do pedido para o WhatsApp da loja via `wa.me`.
+- **Painel Administrativo Completo** (acesso discreto no rodapé):
+  - Dashboard com faturamento, pedidos, ticket médio, mais vendidos e atualização de status.
+  - **PDV (Ponto de Venda)** completo para vendas presenciais/WhatsApp.
+  - CRUD completo de Produtos Físicos e Apostilas PDF (com upload comprimido de imagens e PDFs).
+  - **Liberar Material para Aluno**: busca de alunos cadastrados e liberação imediata de apostilas para download.
+  - Gestão de Cupons, Redes Sociais, WhatsApp e Configurações Gerais.
+- **Widgets Flutuantes**:
+  - Direita: botões oficiais do **Instagram** e **WhatsApp**.
+  - Esquerda: **Prof. Mel** (assistente virtual interativa com foto em fundo transparente e respostas rápidas direcionando para Instagram/WhatsApp).
+
+---
+
+## Configuração do Firebase (Banco Isolado)
+
+O projeto já está provisionado automaticamente com um banco Firestore isolado em `firebase-applet-config.json` (`firestoreDatabaseId` exclusivo) e regras de segurança validadas em `firestore.rules`.
+
+- **Login com Google**: funciona imediatamente sem nenhuma configuração extra.
+- **Login com E-mail e Senha (opcional)**: caso queira utilizar o cadastro/login tradicional por e-mail/senha além do Google, ative o provedor **E-mail/senha** em *Firebase Console → Authentication → Sign-in method*.
+- **Admin Padrão**: o e-mail de bootstrap configurado no provisionamento possui acesso administrativo imediato via Google Sign-In, podendo também autorizar o UID da conta `admin@x.com` diretamente na aba **Configurações** do Painel Admin.
+
+---
+
+## Armazenamento de Arquivos e Vercel Blob
+
+O endpoint `POST /api/upload` possui comportamento híbrido automático:
+
+1. **Com `BLOB_READ_WRITE_TOKEN` configurado (Produção / Vercel)**:
+   - Os uploads de imagens (já comprimidas em WebP no navegador sem perda perceptível) e arquivos PDF são enviados diretamente ao **Vercel Blob**.
+2. **Sem `BLOB_READ_WRITE_TOKEN` (Desenvolvimento Local / AI Studio)**:
+   - Os arquivos são salvos automaticamente em `/public/uploads/` e servidos pelo Express sem necessidade de chaves manuais.
+
+### Variáveis de Ambiente (`.env`)
+
+```env
+GEMINI_API_KEY="SUA_CHAVE_OPCIONAL"
+APP_URL="https://sua-loja.vercel.app"
+BLOB_READ_WRITE_TOKEN="vercel_blob_rw_..."
 ```
 
 ---
 
-## Como rodar localmente
+## Executando Localmente e Deploy
 
-1. Instale as dependências:
-   ```bash
-   npm install
-   ```
-2. Copie `.env.example` para `.env` (opcionalmente preenchendo `BLOB_READ_WRITE_TOKEN` caso queira testar uploads no Vercel Blob):
-   ```bash
-   cp .env.example .env
-   ```
-3. Inicie o servidor full-stack na porta `3000`:
-   ```bash
-   npm run dev
-   ```
-4. Execute os testes unitários e validação de tipos:
-   ```bash
-   npx --yes tsx --test src/lib/commerce.test.ts
-   npm run lint
-   npm run build
-   ```
+```bash
+npm install
+npm run dev
+```
 
----
+Build de produção:
 
-## Setup do Firebase (Projeto Isolado)
+```bash
+npm run build
+```
 
-O projeto já possui `firebase-applet-config.json` e `firestore.rules` implantados. Caso deseje conectar um projeto Firebase novo (`papelaria-da-prof-[timestamp]`):
-
-1. Acesse o [Firebase Console](https://console.firebase.google.com/) e crie um novo projeto.
-2. Em **Authentication → Sign-in method**, ative os provedores:
-   - **Email/Password** (necessário para login direto via `admin@x.com`)
-   - **Google** (opcional para proprietária)
-3. Em **Authentication → Users**, cadastre `admin@x.com` (ou faça o primeiro login no modal **Área Admin** após habilitar Email/Senha).
-4. Em **Firestore Database**, crie o banco de dados e publique o arquivo `firestore.rules` deste repositório.
-5. Registre um App Web no Firebase e atualize `firebase-applet-config.json` ou as variáveis `VITE_FIREBASE_*` do `.env`.
-
----
-
-## Setup do Vercel Blob (Upload de Imagens e Vídeos)
-
-Todas as imagens enviadas pelo painel administrativo passam automaticamente por compressão no servidor (`sharp` -> WebP com qualidade 84 e largura máxima de 1600px) antes do armazenamento:
-
-1. No painel da **Vercel**, ative **Storage → Blob** no seu projeto.
-2. Copie o token gerado (`BLOB_READ_WRITE_TOKEN`) para as variáveis de ambiente da Vercel (ou `.env` local).
-3. Quando `BLOB_READ_WRITE_TOKEN` estiver definido, a rota `POST /api/upload` envia diretamente para o Vercel Blob (`@vercel/blob`). Sem o token (em preview local), os arquivos otimizados são salvos em `public/uploads/`.
-
----
-
-## Variáveis de Ambiente
-
-Veja `.env.example`:
-- `BLOB_READ_WRITE_TOKEN` — Token de leitura/escrita do Vercel Blob
-- `VITE_STORE_WHATSAPP` — Número padrão do WhatsApp da loja (`5517991234567`)
-- `VITE_ORIGIN_CEP` — CEP de origem em São José do Rio Preto (`15015000`)
-- `VITE_FIREBASE_*` — Credenciais Firebase Web (opcional se usar `firebase-applet-config.json`)
-
----
-
-## Credenciais da Área Admin
-
-No rodapé do site (canto inferior direito), clique no ícone discreto **Área Admin**:
-
-- **Login:** `admin@x.com`
-- **Senha:** `admin4321`
+Para deploy no **Vercel**, conecte o repositório, configure `BLOB_READ_WRITE_TOKEN` nas *Environment Variables* do projeto e faça o deploy normalmente. Todos os assets da loja (`/public/images/*` e `/public/pdfs/*`) estão incluídos diretamente no repositório.

@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 840" fill="none">
+  <defs>
+    <linearGradient id="hbg" x1="0" y1="0" x2="1200" y2="840" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FDF8F5"/>
+      <stop offset="48%" stop-color="#F9E8EE"/>
+      <stop offset="100%" stop-color="#EDE6F5"/>
+    </linearGradient>
+    <linearGradient id="roseBook" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F7D5E0"/>
+      <stop offset="100%" stop-color="#E5A9BC"/>
+    </linearGradient>
+    <linearGradient id="lilacBook" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#EAE0F5"/>
+      <stop offset="100%" stop-color="#CBB9E2"/>
+    </linearGradient>
+    <linearGradient id="taupeRibbon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8A695D"/>
+      <stop offset="100%" stop-color="#6E5248"/>
+    </linearGradient>
+    <filter id="cardShadow" x="-15%" y="-15%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="22" stdDeviation="24" flood-color="#6E5248" flood-opacity="0.16"/>
+    </filter>
+    <filter id="softFloat" x="-15%" y="-15%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#6E5248" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="840" fill="url(#hbg)"/>
+  <circle cx="980" cy="150" r="260" fill="#F4D7E2" opacity="0.5"/>
+  <circle cx="200" cy="690" r="270" fill="#E3D9F2" opacity="0.55"/>
+
+  <!-- Botanical Pastel Accents -->
+  <g opacity="0.45">
+    <ellipse cx="145" cy="175" rx="46" ry="18" transform="rotate(-32 145 175)" fill="#E7B8C8"/>
+    <ellipse cx="178" cy="145" rx="38" ry="14" transform="rotate(-65 178 145)" fill="#D8C8EA"/>
+    <ellipse cx="1055" cy="655" rx="52" ry="20" transform="rotate(28 1055 655)" fill="#E7B8C8"/>
+    <ellipse cx="1020" cy="690" rx="42" ry="16" transform="rotate(62 1020 690)" fill="#D8C8EA"/>
+  </g>
+
+  <!-- Main Linen Desk Mat -->
+  <rect x="88" y="88" width="1024" height="664" rx="44" fill="#FFFDFB" opacity="0.88" filter="url(#cardShadow)"/>
+  <rect x="112" y="112" width="976" height="616" rx="34" stroke="#F1E2E7" stroke-width="2"/>
+
+  <!-- Open Planner Centerpiece -->
+  <g transform="translate(170,160) rotate(-3.5)" filter="url(#cardShadow)">
+    <rect x="0" y="0" width="490" height="390" rx="26" fill="url(#roseBook)"/>
+    <rect x="18" y="16" width="222" height="358" rx="14" fill="#FFFDFB"/>
+    <rect x="250" y="16" width="222" height="358" rx="14" fill="#FFFDFB"/>
+
+    <!-- Left Page Layout -->
+    <text x="42" y="58" font-family="Georgia, serif" font-size="20" fill="#4A3731">Semana Pedagógica</text>
+    <line x1="42" y1="74" x2="216" y2="74" stroke="#EBC9D4" stroke-width="2.5" stroke-linecap="round"/>
+    <rect x="42" y="96" width="174" height="58" rx="12" fill="#FDF6F8" stroke="#F1DAE2"/>
+    <circle cx="64" cy="125" r="10" fill="#F3DCE3"/>
+    <line x1="84" y1="118" x2="196" y2="118" stroke="#D9C4CC" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="84" y1="133" x2="170" y2="133" stroke="#E9DCE0" stroke-width="2" stroke-linecap="round"/>
+
+    <rect x="42" y="170" width="174" height="58" rx="12" fill="#F8F4FC" stroke="#E5DBF2"/>
+    <circle cx="64" cy="199" r="10" fill="#DFD1EF"/>
+    <line x1="84" y1="192" x2="196" y2="192" stroke="#CBBBE0" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="84" y1="207" x2="162" y2="207" stroke="#E2D8EE" stroke-width="2" stroke-linecap="round"/>
+
+    <rect x="42" y="246" width="174" height="96" rx="14" fill="#FAF6F3" stroke="#EDE1DC"/>
+    <text x="58" y="278" font-family="Georgia, serif" font-size="14" fill="#6E5248">Notas da Prof</text>
+    <line x1="58" y1="296" x2="196" y2="296" stroke="#E8DCD7" stroke-width="2"/>
+    <line x1="58" y1="316" x2="184" y2="316" stroke="#E8DCD7" stroke-width="2"/>
+
+    <!-- Right Page Layout -->
+    <rect x="274" y="46" width="174" height="114" rx="16" fill="#F9EBEF"/>
+    <circle cx="361" cy="96" r="32" fill="#FFFDFB"/>
+    <path d="M348 96 L358 106 L376 86" stroke="#C4657F" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="361" y="146" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="600" fill="#6E5248">META DA TURMA</text>
+
+    <line x1="274" y1="190" x2="444" y2="190" stroke="#EFE2E6" stroke-width="2"/>
+    <line x1="274" y1="218" x2="430" y2="218" stroke="#EFE2E6" stroke-width="2"/>
+    <line x1="274" y1="246" x2="440" y2="246" stroke="#EFE2E6" stroke-width="2"/>
+    <line x1="274" y1="274" x2="412" y2="274" stroke="#EFE2E6" stroke-width="2"/>
+    <rect x="274" y="302" width="174" height="44" rx="12" fill="url(#taupeRibbon)"/>
+    <text x="361" y="329" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="600" fill="#FFFDFB">Papelaria da Prof</text>
+
+    <!-- Rose Gold Spiral Rings -->
+    <g fill="#C9A88A">
+      <rect x="235" y="42" width="20" height="8" rx="4"/>
+      <rect x="235" y="78" width="20" height="8" rx="4"/>
+      <rect x="235" y="114" width="20" height="8" rx="4"/>
+      <rect x="235" y="150" width="20" height="8" rx="4"/>
+      <rect x="235" y="186" width="20" height="8" rx="4"/>
+      <rect x="235" y="222" width="20" height="8" rx="4"/>
+      <rect x="235" y="258" width="20" height="8" rx="4"/>
+      <rect x="235" y="294" width="20" height="8" rx="4"/>
+      <rect x="235" y="330" width="20" height="8" rx="4"/>
+    </g>
+  </g>
+
+  <!-- Exclusive Apostila Stack Right -->
+  <g transform="translate(720,140) rotate(4.5)" filter="url(#cardShadow)">
+    <rect x="22" y="22" width="290" height="390" rx="24" fill="#F2E6E0"/>
+    <rect x="10" y="10" width="290" height="390" rx="24" fill="#F8E7EE"/>
+    <rect x="0" y="0" width="290" height="390" rx="24" fill="url(#lilacBook)"/>
+    <rect x="26" y="30" width="238" height="330" rx="16" fill="#FFFDFB"/>
+    <rect x="58" y="54" width="174" height="28" rx="14" fill="#F9EBEF"/>
+    <text x="145" y="72" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="700" fill="#B85E77">PDF EXCLUSIVO</text>
+    <circle cx="145" cy="154" r="52" fill="#F7EFFA"/>
+    <circle cx="145" cy="154" r="36" fill="#F4DCE6"/>
+    <text x="145" y="164" text-anchor="middle" font-family="Georgia, serif" font-size="28" fill="#6E5248">Aa</text>
+    <text x="145" y="248" text-anchor="middle" font-family="Georgia, serif" font-size="24" fill="#4A3731">Apostila de</text>
+    <text x="145" y="278" text-anchor="middle" font-family="Georgia, serif" font-size="24" fill="#B85E77">Aula Particular</text>
+    <line x1="72" y1="302" x2="218" y2="302" stroke="#EDE0E6" stroke-width="2"/>
+    <text x="145" y="328" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#8C736A">Pronta para Imprimir</text>
+  </g>
+
+  <!-- Flashcards Bottom Left -->
+  <g transform="translate(175,540) rotate(-6)" filter="url(#softFloat)">
+    <rect x="0" y="0" width="160" height="120" rx="18" fill="#FFFDFB" stroke="#EED6DF" stroke-width="2"/>
+    <rect x="18" y="18" width="124" height="84" rx="12" fill="#FBF3F6"/>
+    <text x="80" y="64" text-anchor="middle" font-family="Georgia, serif" font-size="26" fill="#B85E77">1·2·3</text>
+    <text x="80" y="88" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#6E5248">Flashcards</text>
+  </g>
+
+  <!-- Pastel Brush Pens Bottom Center -->
+  <g transform="translate(460,575) rotate(-11)" filter="url(#softFloat)">
+    <rect x="0" y="0" width="260" height="24" rx="12" fill="#F2B8C6"/>
+    <rect x="216" y="0" width="44" height="24" rx="12" fill="#6E5248"/>
+    <rect x="16" y="38" width="260" height="24" rx="12" fill="#C9B6DF"/>
+    <rect x="232" y="38" width="44" height="24" rx="12" fill="#6E5248"/>
+    <rect x="32" y="76" width="260" height="24" rx="12" fill="#EBD5C8"/>
+    <rect x="248" y="76" width="44" height="24" rx="12" fill="#6E5248"/>
+  </g>
+</svg>

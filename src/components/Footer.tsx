@@ -1,160 +1,145 @@
 import React from 'react';
-import { Instagram, Lock, Mail, MapPin, MessageCircle } from 'lucide-react';
-import { BrandMark } from './BrandMark';
-import { buildWhatsAppUrl } from '../lib/commerce';
-import type { AppView, StoreSettings } from '../types/store';
+import { Lock } from 'lucide-react';
+import { useStore } from '../context/StoreContext';
+import { PDF_CATEGORIES } from '../data/defaults';
+import { SafeImage } from './SafeImage';
+import { BLOB_ASSETS } from '../data/assets';
 
-interface FooterProps {
-  settings: StoreSettings;
-  onNavigate: (view: AppView) => void;
-  onOpenAdmin: () => void;
-}
-
-export function Footer({ settings, onNavigate, onOpenAdmin }: FooterProps) {
-  const whatsappLink = buildWhatsAppUrl(
-    settings.whatsappNumber,
-    'Olá! Vim pelo site da Papelaria da Prof e gostaria de tirar uma dúvida.'
-  );
+export function Footer() {
+  const { navigate, settings, categories } = useStore();
 
   return (
-    <footer className="bg-white border-t border-[#EFE4DE]">
+    <footer className="mt-20 bg-white border-t-4 border-[#F67BB4] relative">
+      {/* Subtle Scalloped Top Edge */}
+      <div className="w-full overflow-hidden leading-none bg-[#FFF9FB]">
+        <svg
+          viewBox="0 0 1200 18"
+          preserveAspectRatio="none"
+          className="w-full h-3 sm:h-4 block fill-[#F67BB4]"
+          aria-hidden="true"
+        >
+          <path d="M0,18 L1200,18 L1200,12 C1160,2 1120,16 1080,8 C1040,0 1000,14 960,7 C920,1 880,15 840,8 C800,1 760,15 720,7 C680,0 640,14 600,8 C560,1 520,15 480,7 C440,0 400,15 360,8 C320,1 280,14 240,7 C200,0 160,15 120,8 C80,1 40,14 0,8 Z" />
+        </svg>
+      </div>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
-          <div className="md:col-span-5 space-y-4">
-            <BrandMark
-              storeName={settings.storeName}
-              tagline="Recursos Pedagógicos"
-              variant="full"
-            />
-            <p className="text-sm text-[#725B53] leading-relaxed max-w-md">
-              {settings.footerText}
-            </p>
-            <div className="flex flex-wrap items-center gap-2.5 pt-1">
-              <a
-                href={settings.instagramUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FDEEF4] border border-[#F6DCE6] text-xs font-semibold text-[#6F4E42] hover:bg-[#FCE2EC] transition-colors"
-              >
-                <Instagram className="w-3.5 h-3.5 text-[#B84A70]" aria-hidden="true" />
-                <span>@papelaria.da.prof</span>
-              </a>
-              <a
-                href={whatsappLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#E6F2FC] border border-[#CEE5F8] text-xs font-semibold text-[#3B6E9C] hover:bg-[#D5E9FA] transition-colors"
-              >
-                <MessageCircle className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>WhatsApp da Prof</span>
-              </a>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-3">
+              <span className="p-1 rounded-full bg-gradient-to-tr from-[#F67BB4] via-[#FAD663] to-[#6BBEEB]">
+                <span className="block bg-white rounded-full p-1">
+                  <SafeImage
+                    src={BLOB_ASSETS.logo}
+                    alt={settings.storeName}
+                    fallbackTitle={settings.storeName}
+                    className="h-14 w-auto object-contain"
+                  />
+                </span>
+              </span>
+              <div>
+                <p className="font-display text-lg font-bold text-[#3A2E45]">{settings.storeName}</p>
+                <p className="text-xs font-semibold text-[#E05899]">Por Professora Lilian</p>
+              </div>
             </div>
+            <p className="text-sm text-[#675975] leading-relaxed">
+              Recursos pedagógicos em PDF preparados com afeto pela Professora Lilian para apoiar mamães e professoras na alfabetização e do 1º ao 5º ano.
+            </p>
           </div>
 
-          <div className="md:col-span-3 space-y-3">
-            <h3 className="font-display text-sm font-bold text-[#3D2A24]">
-              Navegação
+          <div>
+            <h3 className="font-display text-base font-bold text-[#3A2E45] mb-4">
+              Categorias em PDF
             </h3>
-            <ul className="space-y-2 text-sm text-[#725B53]">
+            <ul className="space-y-2.5 text-sm text-[#675975]">
+              {categories.map((cat) => (
+                <li key={cat}>
+                  <button
+                    type="button"
+                    onClick={() => navigate('catalog', undefined, cat)}
+                    className="hover:text-[#E05899] transition-colors text-left cursor-pointer"
+                  >
+                    {cat}
+                  </button>
+                </li>
+              ))}
               <li>
                 <button
                   type="button"
-                  onClick={() => onNavigate({ page: 'catalog' })}
-                  className="hover:text-[#6F4E42] transition-colors"
+                  onClick={() => navigate('student')}
+                  className="hover:text-[#E05899] transition-colors text-left cursor-pointer"
                 >
-                  Catálogo Completo
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() =>
-                    onNavigate({ page: 'catalog', initialResourceType: 'terapeutico' })
-                  }
-                  className="hover:text-[#6F4E42] transition-colors"
-                >
-                  Recursos Terapêuticos
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigate({ page: 'apostilas' })}
-                  className="hover:text-[#6F4E42] transition-colors font-semibold text-[#6B4C8C]"
-                >
-                  Apostilas & PDFs Exclusivos
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigate({ page: 'aluno' })}
-                  className="hover:text-[#6F4E42] transition-colors"
-                >
-                  Área do Aluno (Downloads)
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigate({ page: 'about' })}
-                  className="hover:text-[#6F4E42] transition-colors"
-                >
-                  Sobre a Papelaria da Prof
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigate({ page: 'blog' })}
-                  className="hover:text-[#6F4E42] transition-colors"
-                >
-                  Caderno de Ideias (Blog)
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigate({ page: 'contact' })}
-                  className="hover:text-[#6F4E42] transition-colors"
-                >
-                  Contato e Orçamentos
+                  Área do Aluno
                 </button>
               </li>
             </ul>
           </div>
 
-          <div className="md:col-span-4 space-y-3">
-            <h3 className="font-display text-sm font-bold text-[#3D2A24]">
-              Atendimento & Envios
+          <div>
+            <h3 className="font-display text-base font-bold text-[#3A2E45] mb-4">
+              Institucional
             </h3>
-            <div className="space-y-2.5 text-sm text-[#725B53]">
-              <p className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-[#B38ED9] shrink-0 mt-0.5" aria-hidden="true" />
-                <span>{settings.cityState} · Retirada agendada e envio nacional</span>
-              </p>
-              <p className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-[#E89EB8] shrink-0" aria-hidden="true" />
-                <span>{settings.contactEmail}</span>
-              </p>
-              <p className="text-xs leading-relaxed pt-1 bg-[#FDF8F5] rounded-2xl p-3 border border-[#EFE4DE]">
-                {settings.shippingPolicy}
-              </p>
+            <ul className="space-y-2.5 text-sm text-[#675975]">
+              <li>
+                <button type="button" onClick={() => navigate('about')} className="hover:text-[#E05899] transition-colors cursor-pointer">
+                  Sobre a Prof. Lilian
+                </button>
+              </li>
+              <li>
+                <button type="button" onClick={() => navigate('contact')} className="hover:text-[#E05899] transition-colors cursor-pointer">
+                  Fale Conosco
+                </button>
+              </li>
+              <li>
+                <button type="button" onClick={() => navigate('policies')} className="hover:text-[#E05899] transition-colors cursor-pointer">
+                  Políticas de Uso e Privacidade
+                </button>
+              </li>
+              <li>
+                <button type="button" onClick={() => navigate('catalog')} className="hover:text-[#E05899] transition-colors cursor-pointer">
+                  Catálogo Completo de PDFs
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="font-display text-base font-bold text-[#3A2E45] mb-4">
+              Atendimento
+            </h3>
+            <p className="text-sm text-[#675975]">{settings.businessHours}</p>
+            <p className="text-sm font-medium text-[#3A2E45]">{settings.contactEmail}</p>
+            <div className="pt-2 flex flex-wrap gap-3">
+              <a
+                href={`https://wa.me/${settings.whatsappNumber.replace(/\D/g, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-bold px-4 py-2 rounded-xl candy-btn-coral"
+              >
+                WhatsApp da Loja
+              </a>
+              <a
+                href={settings.instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-bold px-4 py-2 rounded-xl candy-btn-purple"
+              >
+                {settings.instagramHandle || 'Instagram'}
+              </a>
             </div>
           </div>
         </div>
 
-        <div className="mt-12 pt-6 border-t border-[#EFE4DE] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#725B53]">
+        <div className="mt-12 pt-6 border-t border-[#FCE1EE] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#675975]">
           <p>
-            © {new Date().getFullYear()} {settings.storeName} · Todos os direitos reservados.
+            © {new Date().getFullYear()} {settings.storeName} · Professora Lilian. Todos os direitos reservados.
           </p>
           <button
             type="button"
-            onClick={onOpenAdmin}
-            className="inline-flex items-center gap-1.5 text-[#725B53] hover:text-[#6F4E42] transition-colors py-1 px-2.5 rounded-full hover:bg-[#FDF8F5]"
+            onClick={() => navigate('admin')}
+            className="inline-flex items-center gap-1.5 text-[#8E7FA0] hover:text-[#3A2E45] transition-colors cursor-pointer"
           >
-            <Lock className="w-3 h-3" aria-hidden="true" />
-            <span>Área Admin</span>
+            <Lock className="w-3 h-3" />
+            <span>Área Administrativa</span>
           </button>
         </div>
       </div>

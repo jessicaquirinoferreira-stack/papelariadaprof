@@ -1,26 +1,24 @@
 # Security Specification — Papelaria da Prof
 
 ## 1. Data Invariants
-1. **Product Catalog Integrity**: Only verified administrators (`isAdmin()`) may create, update, or delete `/products/{productId}`. Public visitors may only `get` or `list` products where `active == true`.
-2. **Order PII Isolation**: Customer orders (`/orders/{orderId}`) contain PII (`customerName`, `customerPhone`, `customerEmail`, address). Unauthenticated users and non-admin users CANNOT `get`, `list`, `update`, or `delete` any order. Public checkout may only `create` an order with `status == 'pendente'`, `source == 'loja'`, bounded `items.size() <= 50`, and `createdAt == request.time`.
-3. **Coupon Anti-Scraping**: Public customers may `get` a specific coupon by exact uppercase code (`/coupons/{couponId}`) during checkout validation, but CANNOT `list` all coupons or modify `usedCount`/discounts. Only `isAdmin()` can `list`, `create`, `update`, or `delete` coupons.
-4. **Store Settings Protection**: Only `/settings/store` is readable publicly for storefront rendering (WhatsApp number, social links, shipping policy). Writes require `isAdmin()`.
-5. **Admin Registry**: `/admins/{userId}` can only be read (`get`) by the matching authenticated user (`request.auth.uid == userId`), never listed or modified via client SDKs.
-6. **Temporal Integrity & Path Hardening**: All document IDs must match `^[a-zA-Z0-9_\-]+$` and be `<= 128` chars. All timestamps (`createdAt`, `updatedAt`, `grantedAt`) are validated against `request.time`.
-7. **Student PII Isolation**: `/students/{studentId}` contains PII (`email`, `phone`, `cpf`). A student can only `get`, `create`, and `update` their own profile (`request.auth.uid == studentId`); only `isAdmin()` can `list` all registered students.
-8. **Digital Apostilas & Protected PDF Assets**: Public showcase metadata in `/digitalMaterials/{materialId}` (`active == true`) never stores raw `pdfUrl`. The protected PDF download URL resides in `/materialAssets/{materialId}` (`allow read, write: if isAdmin()`) and is copied exclusively into `/studentGrants/{grantId}` by an admin.
-9. **Student Material Grant Isolation**: A student can `get` or `list` `/studentGrants/{grantId}` ONLY where `resource.data.studentId == request.auth.uid`. Students CANNOT create, update, or delete grants; only `isAdmin()` can confirm or revoke PDF access after WhatsApp payment.
+1. **Admin Authority Isolation**: Only users present in `/admins/{uid}`, the verified bootstrap administrator email (`jonasweb2rj@gmail.com` with `email_verified == true`), or the provisioned primary admin UID (`1rIIihBz4yZhUbbAEDFJXqqQ7x43`) can create, update, or delete store catalog items (`products`, `materials`, `materials/*/private/*`, `coupons`, `settings`) or grant digital materials (`student_materials`).
+2. **Student PII Isolation**: Documents in `/users/{userId}` contain PII (`email`, `phone`, `cep`, `address`). Only the matching authenticated owner (`request.auth.uid == userId`) or a verified admin may read or write `/users/{userId}`. No blanket `isSignedIn()` reads or lists are allowed.
+3. **Role Self-Escalation Prevention**: On `/users/{userId}` creation, `role` MUST equal `'student'`, `uid` MUST equal `request.auth.uid`, and updates MUST NOT modify `uid`, `role`, or `createdAt`.
+4. **Paid Digital PDF Isolation**: Public `/materials/{materialId}` documents expose only catalog metadata (`title`, `description`, `price`, `coverUrl`, `pagesCount`). The actual `pdfUrl` lives in `/materials/{materialId}/private/{docId}` (readable only by admin) and is copied into `/student_materials/{grantId}` solely when an admin releases the material to a specific `studentId`.
+5. **Strict Student Material Access**: A student may only `get` or `list` `/student_materials` documents where `resource.data.studentId == request.auth.uid`. Students can never create, update, or delete `/student_materials`.
+6. **Order Integrity**: Guests and signed-in customers may submit valid `pending` `online` orders with bounded item arrays (`items.size() >= 1 && items.size() <= 50`) and numeric totals `>= 0`. Only admins can list all orders, change order `status` (with terminal locking for non-admins), or create `pdv` orders. Signed-in customers may only list/get orders matching `resource.data.customerId == request.auth.uid`.
+7. **Temporal & Path Hardening**: Every single-document operation validates `isValidId()` (`^[a-zA-Z0-9_-]+$`, max length 128/256) and enforces server timestamps (`request.time`) on `createdAt` and `updatedAt`.
 
-## 2. The "Dirty Dozen" Attack Payloads (+ LMS Guards)
-1. **ID Poisoning**: Creating `/orders/../../etc/passwd` or a 500-char ID -> Rejected by `isValidId(orderId)`.
-2. **Shadow Field Injection on Order**: Submitting an order with `{ ..., isPaid: true, adminOverride: true }` -> Rejected by `hasOnly(...)` key allowlist in `isValidOrder()`.
-3. **Order Status Shortcutting**: Creating a public storefront order with `status: 'finalizado'` or `source: 'pdv'` -> Rejected by `incoming().status == 'pendente' && incoming().source == 'loja'`.
-4. **Order PII Scraping**: Unauthenticated or non-admin `list` or `get` on `/orders` -> Rejected because `allow read: if isAdmin()`.
-5. **Email Spoofing**: Authenticated user with `email == 'jonasjessicalove@gmail.com'` and `email_verified: false` attempting admin write -> Rejected because `isAdmin()` mandates `request.auth.token.email_verified == true`.
-6. **Privilege Escalation**: Authenticated customer writing `/admins/{uid}` with `{ role: 'admin' }` -> Rejected (`allow write: if false`).
-7. **Unbounded Array / Denial of Wallet**: Submitting an order with `items` containing 500 items or 100KB strings -> Rejected by `items.size() <= 50` and `.size()` bounds on every string.
-8. **Timestamp Forgery**: Creating a product, student profile, or grant with backdated timestamps -> Rejected by `== request.time`.
-9. **Public Product Tampering**: Non-admin user attempting to lower `price` on `/products/{id}` or `/digitalMaterials/{id}` -> Rejected by `isAdmin()`.
-10. **Inactive Product / PDF Asset Leakage**: Unauthenticated user reading `/materialAssets/{id}` to steal raw PDF download links -> Rejected (`allow read, write: if isAdmin()`).
-11. **Cross-Student Grant Hijack & Self-Grant**: Student A trying to read `studentGrants` belonging to Student B or creating a `studentGrants` doc for themselves -> Rejected (`resource.data.studentId == request.auth.uid` on read; `isAdmin()` required on create/update/delete).
-12. **Student PII Enumeration & Role Escalation**: Student listing `/students` or injecting `role: 'admin'` in `/students/{uid}` -> Rejected (`allow list: if isAdmin()` and `hasOnly(...)`).
+## 2. The "Dirty Dozen" Attack Payloads
+1. **Self-Admin Escalation**: `POST /users/{uid}` with `{ "uid": uid, "role": "admin", ... }` -> **DENIED** (`role == 'student'` enforced).
+2. **Shadow Ghost Field Injection**: `POST /users/{uid}` with `{ ..., "isVerified": true, "freeAccess": true }` -> **DENIED** (`keys().hasOnly(...)` rejects extra fields).
+3. **Unverified Admin Email Spoof**: Request with token `{ "email": "jonasweb2rj@gmail.com", "email_verified": false }` -> **DENIED** (`email_verified == true` mandated).
+4. **Cross-Student PII Read**: Authenticated Student B attempts `get /users/{studentA_uid}` -> **DENIED** (`request.auth.uid == userId` fails).
+5. **Cross-Student Material Theft**: Authenticated Student B attempts `list /student_materials` without `where('studentId', '==', studentB_uid)` or `get /student_materials/{studentA_grant}` -> **DENIED** (`resource.data.studentId == request.auth.uid`).
+6. **Self-Grant Material Hack**: Student attempts `create /student_materials/{id}` with `studentId == request.auth.uid` -> **DENIED** (`isAdmin()` required).
+7. **Public PDF URL Scraping**: Unauthenticated visitor attempts `get /materials/{id}/private/file` -> **DENIED** (`isAdmin()` required).
+8. **ID Poisoning**: `create /products/{1500_char_junk_id}` -> **DENIED** (`isValidId(productId)` enforces `<= 128` and `^[a-zA-Z0-9_-]+$`).
+9. **Unbounded Order Array DoS**: `create /orders/{id}` with 100 items in `items` -> **DENIED** (`items.size() <= 50`).
+10. **Fraudulent Pre-Paid Online Order**: Non-admin attempts `create /orders/{id}` with `status: "paid"` or `source: "pdv"` -> **DENIED** (non-admin orders locked to `status == "pending"` and `source == "online"`).
+11. **Immutable Timestamp Tampering**: `update /users/{uid}` changing `createdAt` or setting `updatedAt` to a fake past timestamp -> **DENIED** (`incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time`).
+12. **Blanket Order List Scraping**: Authenticated student attempts `list /orders` without `customerId == request.auth.uid` -> **DENIED** (rule enforces `resource.data.customerId == request.auth.uid`).

@@ -1,897 +1,212 @@
 {
   "entities": {
-    "Product": {
-      "title": "Product",
-      "description": "Pedagogical or therapeutic product item in the Papelaria da Prof storefront catalog.",
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 128,
-          "pattern": "^[a-zA-Z0-9_\\-]+$",
-          "description": "Unique product identifier"
-        },
-        "slug": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 140,
-          "pattern": "^[a-z0-9\\-]+$",
-          "description": "URL-friendly slug"
-        },
-        "name": {
-          "type": "string",
-          "minLength": 2,
-          "maxLength": 160,
-          "description": "Product display title"
-        },
-        "shortDescription": {
-          "type": "string",
-          "minLength": 2,
-          "maxLength": 300,
-          "description": "Short summary for cards and SEO"
-        },
-        "description": {
-          "type": "string",
-          "minLength": 2,
-          "maxLength": 8000,
-          "description": "Rich HTML or formatted product description"
-        },
-        "price": {
-          "type": "number",
-          "description": "Regular price in BRL"
-        },
-        "promoPrice": {
-          "type": "number",
-          "description": "Optional promotional price in BRL"
-        },
-        "stock": {
-          "type": "number",
-          "description": "Available inventory units"
-        },
-        "category": {
-          "type": "string",
-          "minLength": 2,
-          "maxLength": 80,
-          "description": "Primary product category"
-        },
-        "resourceType": {
-          "type": "string",
-          "enum": ["pedagogico", "terapeutico", "ambos", "papelaria"],
-          "description": "Pedagogical or therapeutic classification"
-        },
-        "recommendedAge": {
-          "type": "string",
-          "minLength": 2,
-          "maxLength": 60,
-          "description": "Target age bracket"
-        },
-        "tags": {
-          "type": "array",
-          "description": "Up to 10 product tags"
-        },
-        "images": {
-          "type": "array",
-          "description": "Up to 8 product media image URLs"
-        },
-        "videoUrl": {
-          "type": "string",
-          "maxLength": 500,
-          "description": "Optional product showcase video URL"
-        },
-        "variants": {
-          "type": "array",
-          "description": "Up to 10 optional product variations"
-        },
-        "featured": {
-          "type": "boolean",
-          "description": "Whether product appears in homepage highlights"
-        },
-        "active": {
-          "type": "boolean",
-          "description": "Whether product is visible in public storefront"
-        },
-        "salesCount": {
-          "type": "number",
-          "description": "Cumulative units sold"
-        },
-        "weightGrams": {
-          "type": "number",
-          "description": "Package weight in grams for shipping calculation"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Server creation timestamp"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Server update timestamp"
-        }
-      },
-      "required": [
-        "id",
-        "slug",
-        "name",
-        "shortDescription",
-        "description",
-        "price",
-        "stock",
-        "category",
-        "resourceType",
-        "recommendedAge",
-        "tags",
-        "images",
-        "featured",
-        "active",
-        "salesCount",
-        "weightGrams",
-        "createdAt",
-        "updatedAt"
-      ]
-    },
-    "Order": {
-      "title": "Order",
-      "description": "Customer storefront checkout order or admin PDV sale.",
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 128,
-          "pattern": "^[a-zA-Z0-9_\\-]+$",
-          "description": "Order document ID"
-        },
-        "orderNumber": {
-          "type": "string",
-          "minLength": 3,
-          "maxLength": 32,
-          "description": "Human-readable order code"
-        },
-        "customerName": {
-          "type": "string",
-          "minLength": 2,
-          "maxLength": 140,
-          "description": "Customer full name"
-        },
-        "customerPhone": {
-          "type": "string",
-          "minLength": 8,
-          "maxLength": 30,
-          "description": "Customer WhatsApp/phone"
-        },
-        "customerEmail": {
-          "type": "string",
-          "maxLength": 160,
-          "description": "Customer email address"
-        },
-        "cep": {
-          "type": "string",
-          "maxLength": 12,
-          "description": "Brazilian postal code"
-        },
-        "street": {
-          "type": "string",
-          "maxLength": 200,
-          "description": "Street name"
-        },
-        "number": {
-          "type": "string",
-          "maxLength": 24,
-          "description": "Street number"
-        },
-        "complement": {
-          "type": "string",
-          "maxLength": 120,
-          "description": "Optional address complement"
-        },
-        "neighborhood": {
-          "type": "string",
-          "maxLength": 120,
-          "description": "Neighborhood"
-        },
-        "city": {
-          "type": "string",
-          "maxLength": 120,
-          "description": "City"
-        },
-        "state": {
-          "type": "string",
-          "maxLength": 4,
-          "description": "State UF code"
-        },
-        "items": {
-          "type": "array",
-          "description": "Bounded list of ordered line items (max 50)"
-        },
-        "subtotal": {
-          "type": "number",
-          "description": "Items subtotal in BRL"
-        },
-        "shippingMethod": {
-          "type": "string",
-          "maxLength": 60,
-          "description": "Selected shipping service (PAC, SEDEX, Retirada, PDV)"
-        },
-        "shippingCost": {
-          "type": "number",
-          "description": "Shipping fee in BRL"
-        },
-        "couponCode": {
-          "type": "string",
-          "maxLength": 40,
-          "description": "Applied coupon code"
-        },
-        "discount": {
-          "type": "number",
-          "description": "Discount amount in BRL"
-        },
-        "total": {
-          "type": "number",
-          "description": "Final total in BRL"
-        },
-        "status": {
-          "type": "string",
-          "enum": ["pendente", "em_andamento", "finalizado", "cancelado"],
-          "description": "Order fulfillment status"
-        },
-        "source": {
-          "type": "string",
-          "enum": ["loja", "pdv"],
-          "description": "Order origin channel"
-        },
-        "notes": {
-          "type": "string",
-          "maxLength": 600,
-          "description": "Optional customer or PDV notes"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Server creation timestamp"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Server update timestamp"
-        }
-      },
-      "required": [
-        "id",
-        "orderNumber",
-        "customerName",
-        "customerPhone",
-        "items",
-        "subtotal",
-        "shippingMethod",
-        "shippingCost",
-        "discount",
-        "total",
-        "status",
-        "source",
-        "createdAt",
-        "updatedAt"
-      ]
-    },
-    "Coupon": {
-      "title": "Coupon",
-      "description": "Promotional discount coupon configured by store admin.",
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "string",
-          "minLength": 2,
-          "maxLength": 40,
-          "pattern": "^[A-Z0-9_\\-]+$",
-          "description": "Uppercase coupon code matching document ID"
-        },
-        "type": {
-          "type": "string",
-          "enum": ["percent", "fixed"],
-          "description": "Discount calculation type"
-        },
-        "value": {
-          "type": "number",
-          "description": "Percentage or fixed BRL discount value"
-        },
-        "minOrderValue": {
-          "type": "number",
-          "description": "Minimum subtotal required in BRL"
-        },
-        "maxUses": {
-          "type": "number",
-          "description": "Maximum allowed redemptions"
-        },
-        "usedCount": {
-          "type": "number",
-          "description": "Current number of uses"
-        },
-        "expiresAt": {
-          "type": "string",
-          "maxLength": 40,
-          "description": "ISO expiration date string"
-        },
-        "active": {
-          "type": "boolean",
-          "description": "Whether coupon is currently active"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Creation timestamp"
-        }
-      },
-      "required": [
-        "code",
-        "type",
-        "value",
-        "minOrderValue",
-        "maxUses",
-        "usedCount",
-        "expiresAt",
-        "active",
-        "createdAt"
-      ]
-    },
-    "StoreSettings": {
-      "title": "StoreSettings",
-      "description": "Storefront configuration, WhatsApp number, social links, shipping rules, and policies.",
-      "type": "object",
-      "properties": {
-        "storeName": {
-          "type": "string",
-          "minLength": 2,
-          "maxLength": 100,
-          "description": "Brand display name"
-        },
-        "tagline": {
-          "type": "string",
-          "maxLength": 140,
-          "description": "Brand tagline"
-        },
-        "primaryColor": {
-          "type": "string",
-          "maxLength": 24,
-          "description": "Primary brand hex color"
-        },
-        "accentColor": {
-          "type": "string",
-          "maxLength": 24,
-          "description": "Secondary gold accent hex color"
-        },
-        "whatsappNumber": {
-          "type": "string",
-          "minLength": 10,
-          "maxLength": 20,
-          "description": "Store WhatsApp digits with country code"
-        },
-        "instagramUrl": {
-          "type": "string",
-          "maxLength": 300,
-          "description": "Instagram profile URL"
-        },
-        "facebookUrl": {
-          "type": "string",
-          "maxLength": 300,
-          "description": "Facebook page URL"
-        },
-        "tiktokUrl": {
-          "type": "string",
-          "maxLength": 300,
-          "description": "TikTok profile URL"
-        },
-        "contactEmail": {
-          "type": "string",
-          "maxLength": 160,
-          "description": "Public support email"
-        },
-        "cityState": {
-          "type": "string",
-          "maxLength": 120,
-          "description": "Store city and state"
-        },
-        "originCep": {
-          "type": "string",
-          "maxLength": 12,
-          "description": "Shipping origin CEP"
-        },
-        "freeShippingThreshold": {
-          "type": "number",
-          "description": "Minimum subtotal in BRL for free shipping"
-        },
-        "welcomeMessage": {
-          "type": "string",
-          "maxLength": 1000,
-          "description": "Default WhatsApp greeting / order confirmation prefix"
-        },
-        "footerText": {
-          "type": "string",
-          "maxLength": 500,
-          "description": "Footer editorial note"
-        },
-        "shippingPolicy": {
-          "type": "string",
-          "maxLength": 2000,
-          "description": "Shipping and return policy summary"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Last update timestamp"
-        }
-      },
-      "required": [
-        "storeName",
-        "tagline",
-        "primaryColor",
-        "accentColor",
-        "whatsappNumber",
-        "instagramUrl",
-        "contactEmail",
-        "cityState",
-        "originCep",
-        "freeShippingThreshold",
-        "welcomeMessage",
-        "footerText",
-        "shippingPolicy",
-        "updatedAt"
-      ]
-    },
-    "BlogPost": {
-      "title": "BlogPost",
-      "description": "Educational blog article written by the store educator.",
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 128,
-          "pattern": "^[a-zA-Z0-9_\\-]+$",
-          "description": "Article ID"
-        },
-        "slug": {
-          "type": "string",
-          "minLength": 2,
-          "maxLength": 140,
-          "pattern": "^[a-z0-9\\-]+$",
-          "description": "URL slug"
-        },
-        "title": {
-          "type": "string",
-          "minLength": 3,
-          "maxLength": 180,
-          "description": "Article headline"
-        },
-        "excerpt": {
-          "type": "string",
-          "minLength": 10,
-          "maxLength": 400,
-          "description": "Short summary"
-        },
-        "content": {
-          "type": "string",
-          "minLength": 20,
-          "maxLength": 12000,
-          "description": "Full article text"
-        },
-        "category": {
-          "type": "string",
-          "maxLength": 80,
-          "description": "Article topic category"
-        },
-        "readTime": {
-          "type": "string",
-          "maxLength": 30,
-          "description": "Estimated read duration"
-        },
-        "coverImage": {
-          "type": "string",
-          "maxLength": 500,
-          "description": "Cover image path or URL"
-        },
-        "published": {
-          "type": "boolean",
-          "description": "Publication visibility flag"
-        },
-        "publishedAt": {
-          "type": "string",
-          "maxLength": 40,
-          "description": "Display publication date"
-        }
-      },
-      "required": [
-        "id",
-        "slug",
-        "title",
-        "excerpt",
-        "content",
-        "category",
-        "readTime",
-        "coverImage",
-        "published",
-        "publishedAt"
-      ]
-    },
     "AdminUser": {
       "title": "AdminUser",
-      "description": "Authorized administrator registry document keyed by Firebase Auth UID.",
+      "description": "Authorized administrator identity document keyed by Firebase Auth UID.",
       "type": "object",
       "properties": {
-        "uid": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 128,
-          "description": "Firebase Auth UID"
-        },
-        "email": {
-          "type": "string",
-          "maxLength": 160,
-          "description": "Administrator email"
-        },
-        "role": {
-          "type": "string",
-          "enum": ["admin"],
-          "description": "Administrator role"
-        }
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "format": "email", "maxLength": 200 },
+        "role": { "type": "string", "enum": ["admin"] },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["uid", "email", "role"]
+      "required": ["uid", "email", "role", "createdAt"]
     },
     "StudentProfile": {
       "title": "StudentProfile",
-      "description": "Registered student profile for the exclusive Student Area (Área do Aluno).",
+      "description": "Student account profile with contact details (PII isolated to owner and admin).",
       "type": "object",
       "properties": {
-        "uid": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 128,
-          "pattern": "^[a-zA-Z0-9_\\-]+$",
-          "description": "Student UID matching document ID"
-        },
-        "fullName": {
-          "type": "string",
-          "minLength": 3,
-          "maxLength": 140,
-          "description": "Full name of student or parent/guardian"
-        },
-        "email": {
-          "type": "string",
-          "minLength": 5,
-          "maxLength": 160,
-          "description": "Student login email address"
-        },
-        "phone": {
-          "type": "string",
-          "minLength": 8,
-          "maxLength": 30,
-          "description": "Student WhatsApp / phone number"
-        },
-        "cpf": {
-          "type": "string",
-          "minLength": 11,
-          "maxLength": 20,
-          "description": "Student or guardian CPF / document number"
-        },
-        "studentOrChildName": {
-          "type": "string",
-          "minLength": 2,
-          "maxLength": 140,
-          "description": "Name of the student attending private tutoring"
-        },
-        "gradeOrAge": {
-          "type": "string",
-          "minLength": 2,
-          "maxLength": 80,
-          "description": "School grade or student age bracket"
-        },
-        "cityState": {
-          "type": "string",
-          "minLength": 2,
-          "maxLength": 120,
-          "description": "City and state"
-        },
-        "notes": {
-          "type": "string",
-          "maxLength": 600,
-          "description": "Optional pedagogical notes or tutoring focus"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Server creation timestamp"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Server update timestamp"
-        }
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "fullName": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "email": { "type": "string", "format": "email", "maxLength": 200 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "cep": { "type": "string", "maxLength": 12 },
+        "address": { "type": "string", "maxLength": 240 },
+        "city": { "type": "string", "maxLength": 100 },
+        "state": { "type": "string", "maxLength": 10 },
+        "role": { "type": "string", "enum": ["student"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": [
-        "uid",
-        "fullName",
-        "email",
-        "phone",
-        "cpf",
-        "studentOrChildName",
-        "gradeOrAge",
-        "cityState",
-        "createdAt",
-        "updatedAt"
-      ]
+      "required": ["uid", "fullName", "email", "role", "createdAt", "updatedAt"]
     },
-    "DigitalMaterial": {
-      "title": "DigitalMaterial",
-      "description": "Public showcase metadata for exclusive private-tutoring apostilas and PDFs (without exposing raw pdfUrl).",
+    "Product": {
+      "title": "Product",
+      "description": "Physical stationery or pedagogical product in the storefront catalog.",
       "type": "object",
       "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 128,
-          "pattern": "^[a-zA-Z0-9_\\-]+$",
-          "description": "Material document ID"
-        },
-        "slug": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 140,
-          "pattern": "^[a-z0-9\\-]+$",
-          "description": "URL-friendly slug"
-        },
-        "title": {
-          "type": "string",
-          "minLength": 3,
-          "maxLength": 160,
-          "description": "Apostila or PDF title"
-        },
-        "description": {
-          "type": "string",
-          "minLength": 5,
-          "maxLength": 4000,
-          "description": "Detailed educational overview"
-        },
-        "levelOrSubject": {
-          "type": "string",
-          "minLength": 2,
-          "maxLength": 80,
-          "description": "Subject or tutoring focus"
-        },
-        "recommendedAge": {
-          "type": "string",
-          "minLength": 2,
-          "maxLength": 60,
-          "description": "Recommended age or grade"
-        },
-        "pagesCount": {
-          "type": "number",
-          "description": "Total printable PDF pages"
-        },
-        "price": {
-          "type": "number",
-          "description": "Regular price in BRL"
-        },
-        "promoPrice": {
-          "type": "number",
-          "description": "Optional promotional price in BRL"
-        },
-        "coverImage": {
-          "type": "string",
-          "maxLength": 500,
-          "description": "Cover preview image URL"
-        },
-        "fileName": {
-          "type": "string",
-          "maxLength": 160,
-          "description": "Original PDF display filename"
-        },
-        "active": {
-          "type": "boolean",
-          "description": "Whether apostila appears in public showcase"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Server creation timestamp"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Server update timestamp"
-        }
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "description": { "type": "string", "maxLength": 2500 },
+        "category": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "price": { "type": "number" },
+        "compareAtPrice": { "type": "number" },
+        "stock": { "type": "number" },
+        "imageUrl": { "type": "string", "maxLength": 1000 },
+        "badge": { "type": "string", "maxLength": 40 },
+        "featured": { "type": "boolean" },
+        "active": { "type": "boolean" },
+        "salesCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "slug",
-        "title",
-        "description",
-        "levelOrSubject",
-        "recommendedAge",
-        "pagesCount",
-        "price",
-        "coverImage",
-        "fileName",
-        "active",
-        "createdAt",
-        "updatedAt"
-      ]
+      "required": ["id", "title", "description", "category", "price", "stock", "imageUrl", "featured", "active", "salesCount", "createdAt", "updatedAt"]
     },
-    "MaterialAsset": {
-      "title": "MaterialAsset",
-      "description": "Admin-only protected storage reference holding the private PDF download URL for a DigitalMaterial.",
+    "Material": {
+      "title": "Material",
+      "description": "Exclusive digital workbook / PDF metadata visible in the catalog.",
       "type": "object",
       "properties": {
-        "materialId": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 128,
-          "pattern": "^[a-zA-Z0-9_\\-]+$",
-          "description": "Matching DigitalMaterial document ID"
-        },
-        "pdfUrl": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 1000,
-          "description": "Hosted PDF download URL"
-        },
-        "fileName": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 160,
-          "description": "PDF file name"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Server update timestamp"
-        }
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "description": { "type": "string", "maxLength": 2500 },
+        "category": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "price": { "type": "number" },
+        "coverUrl": { "type": "string", "maxLength": 1000 },
+        "pagesCount": { "type": "number" },
+        "stock": { "type": "number" },
+        "featured": { "type": "boolean" },
+        "active": { "type": "boolean" },
+        "salesCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["materialId", "pdfUrl", "fileName", "updatedAt"]
+      "required": ["id", "title", "description", "category", "price", "coverUrl", "pagesCount", "stock", "featured", "active", "salesCount", "createdAt", "updatedAt"]
     },
-    "StudentMaterialGrant": {
-      "title": "StudentMaterialGrant",
-      "description": "Admin-confirmed permission unlocking a specific apostila/PDF for a selected student after WhatsApp payment.",
+    "MaterialFile": {
+      "title": "MaterialFile",
+      "description": "Private PDF storage URL for an exclusive digital material (admin-only and granted-student access).",
       "type": "object",
       "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 128,
-          "pattern": "^[a-zA-Z0-9_\\-]+$",
-          "description": "Grant document ID"
-        },
-        "studentId": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 128,
-          "pattern": "^[a-zA-Z0-9_\\-]+$",
-          "description": "Authorized student UID"
-        },
-        "studentName": {
-          "type": "string",
-          "minLength": 2,
-          "maxLength": 140,
-          "description": "Denormalized student display name"
-        },
-        "studentEmail": {
-          "type": "string",
-          "minLength": 3,
-          "maxLength": 160,
-          "description": "Denormalized student email"
-        },
-        "materialId": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 128,
-          "pattern": "^[a-zA-Z0-9_\\-]+$",
-          "description": "Granted DigitalMaterial ID"
-        },
-        "materialTitle": {
-          "type": "string",
-          "minLength": 2,
-          "maxLength": 160,
-          "description": "Apostila title"
-        },
-        "materialDescription": {
-          "type": "string",
-          "maxLength": 4000,
-          "description": "Material description snapshot"
-        },
-        "levelOrSubject": {
-          "type": "string",
-          "maxLength": 80,
-          "description": "Subject or level"
-        },
-        "pagesCount": {
-          "type": "number",
-          "description": "Page count snapshot"
-        },
-        "coverImage": {
-          "type": "string",
-          "maxLength": 500,
-          "description": "Cover image URL"
-        },
-        "pdfUrl": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 1000,
-          "description": "Protected PDF download URL unlocked exclusively for this student"
-        },
-        "fileName": {
-          "type": "string",
-          "maxLength": 160,
-          "description": "Downloadable PDF filename"
-        },
-        "orderRef": {
-          "type": "string",
-          "maxLength": 40,
-          "description": "Optional order number confirmed via WhatsApp"
-        },
-        "notes": {
-          "type": "string",
-          "maxLength": 600,
-          "description": "Optional educator note visible to the student"
-        },
-        "grantedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Server grant confirmation timestamp"
-        }
+        "materialId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "pdfUrl": { "type": "string", "maxLength": 1500 },
+        "pdfFileName": { "type": "string", "maxLength": 200 },
+        "fileSizeBytes": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "studentId",
-        "studentName",
-        "studentEmail",
-        "materialId",
-        "materialTitle",
-        "coverImage",
-        "pdfUrl",
-        "fileName",
-        "grantedAt"
-      ]
+      "required": ["materialId", "pdfUrl", "pdfFileName", "updatedAt"]
+    },
+    "StudentMaterial": {
+      "title": "StudentMaterial",
+      "description": "Unlocked digital material grant connecting a student to a downloadable PDF.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "studentId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "studentName": { "type": "string", "maxLength": 140 },
+        "studentEmail": { "type": "string", "maxLength": 200 },
+        "materialId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "materialTitle": { "type": "string", "maxLength": 160 },
+        "category": { "type": "string", "maxLength": 80 },
+        "coverUrl": { "type": "string", "maxLength": 1000 },
+        "pdfUrl": { "type": "string", "maxLength": 1500 },
+        "pdfFileName": { "type": "string", "maxLength": 200 },
+        "orderRef": { "type": "string", "maxLength": 80 },
+        "unlockedBy": { "type": "string", "maxLength": 128 },
+        "unlockedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "studentId", "studentName", "studentEmail", "materialId", "materialTitle", "category", "coverUrl", "pdfUrl", "pdfFileName", "unlockedBy", "unlockedAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer or PDV order with shipping, coupon, and item summary.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "orderNumber": { "type": "string", "maxLength": 40 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "customerName": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "customerPhone": { "type": "string", "minLength": 8, "maxLength": 30 },
+        "customerEmail": { "type": "string", "maxLength": 200 },
+        "cep": { "type": "string", "maxLength": 12 },
+        "address": { "type": "string", "maxLength": 300 },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "shippingCost": { "type": "number" },
+        "discount": { "type": "number" },
+        "couponCode": { "type": "string", "maxLength": 40 },
+        "total": { "type": "number" },
+        "paymentMethod": { "type": "string", "maxLength": 50 },
+        "source": { "type": "string", "enum": ["online", "pdv"] },
+        "status": { "type": "string", "enum": ["pending", "paid", "shipped", "completed", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "orderNumber", "customerName", "customerPhone", "items", "subtotal", "shippingCost", "discount", "total", "source", "status", "createdAt", "updatedAt"]
+    },
+    "Coupon": {
+      "title": "Coupon",
+      "description": "Discount coupon configured by admin.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "code": { "type": "string", "minLength": 2, "maxLength": 40 },
+        "type": { "type": "string", "enum": ["percent", "fixed"] },
+        "value": { "type": "number" },
+        "minOrder": { "type": "number" },
+        "active": { "type": "boolean" },
+        "usageCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "code", "type", "value", "minOrder", "active", "usageCount", "createdAt"]
+    },
+    "StoreSettings": {
+      "title": "StoreSettings",
+      "description": "Public store configuration including WhatsApp, Instagram, hours, and hero copy.",
+      "type": "object",
+      "properties": {
+        "storeName": { "type": "string", "maxLength": 100 },
+        "whatsappNumber": { "type": "string", "maxLength": 24 },
+        "instagramUrl": { "type": "string", "maxLength": 300 },
+        "instagramHandle": { "type": "string", "maxLength": 60 },
+        "contactEmail": { "type": "string", "maxLength": 160 },
+        "businessHours": { "type": "string", "maxLength": 160 },
+        "heroTitle": { "type": "string", "maxLength": 140 },
+        "heroSubtitle": { "type": "string", "maxLength": 360 },
+        "freeShippingThreshold": { "type": "number" },
+        "assistantName": { "type": "string", "maxLength": 60 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["storeName", "whatsappNumber", "instagramUrl", "contactEmail", "businessHours", "heroTitle", "heroSubtitle", "freeShippingThreshold", "assistantName", "updatedAt"]
     }
   },
   "firestore": {
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Admin authorization documents keyed by UID."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/StudentProfile" },
+      "description": "Student profiles with isolated PII."
+    },
     "/products/{productId}": {
       "schema": { "$ref": "#/entities/Product" },
-      "description": "Catalog of pedagogical and therapeutic stationery products"
+      "description": "Physical storefront products."
+    },
+    "/materials/{materialId}": {
+      "schema": { "$ref": "#/entities/Material" },
+      "description": "Public metadata for exclusive digital PDFs and workbooks."
+    },
+    "/materials/{materialId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/MaterialFile" },
+      "description": "Private PDF download URLs separated from public catalog listings."
+    },
+    "/student_materials/{grantId}": {
+      "schema": { "$ref": "#/entities/StudentMaterial" },
+      "description": "Materials unlocked by admin for specific students."
     },
     "/orders/{orderId}": {
       "schema": { "$ref": "#/entities/Order" },
-      "description": "Customer orders from checkout and PDV sales"
+      "description": "Customer storefront orders and in-store PDV sales."
     },
     "/coupons/{couponId}": {
       "schema": { "$ref": "#/entities/Coupon" },
-      "description": "Discount coupons keyed by uppercase coupon code"
+      "description": "Store discount coupons."
     },
     "/settings/{settingId}": {
       "schema": { "$ref": "#/entities/StoreSettings" },
-      "description": "Global storefront settings and social/WhatsApp configuration"
-    },
-    "/blogPosts/{postId}": {
-      "schema": { "$ref": "#/entities/BlogPost" },
-      "description": "Pedagogical articles and tips"
-    },
-    "/admins/{userId}": {
-      "schema": { "$ref": "#/entities/AdminUser" },
-      "description": "Authorized admin role registry"
-    },
-    "/students/{studentId}": {
-      "schema": { "$ref": "#/entities/StudentProfile" },
-      "description": "Registered student profiles with PII isolated by owner UID and admin"
-    },
-    "/digitalMaterials/{materialId}": {
-      "schema": { "$ref": "#/entities/DigitalMaterial" },
-      "description": "Public showcase metadata for exclusive private-tutoring apostilas and PDFs"
-    },
-    "/materialAssets/{materialId}": {
-      "schema": { "$ref": "#/entities/MaterialAsset" },
-      "description": "Admin-only protected PDF download URLs for digital materials"
-    },
-    "/studentGrants/{grantId}": {
-      "schema": { "$ref": "#/entities/StudentMaterialGrant" },
-      "description": "Per-student unlocked apostilas and PDFs granted by admin after payment confirmation"
+      "description": "General store settings and social links."
     }
   }
 }
