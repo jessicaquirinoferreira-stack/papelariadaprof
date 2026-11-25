@@ -297,6 +297,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
                 ? DEFAULT_SETTINGS.heroSubtitle
                 : raw.heroSubtitle,
             freeShippingThreshold: 0,
+            aboutTitle: raw.aboutTitle || DEFAULT_SETTINGS.aboutTitle,
+            aboutSubtitle: raw.aboutSubtitle || DEFAULT_SETTINGS.aboutSubtitle,
+            aboutPhotoUrl: raw.aboutPhotoUrl || DEFAULT_SETTINGS.aboutPhotoUrl,
+            aboutText: raw.aboutText || DEFAULT_SETTINGS.aboutText,
+            aboutCredentials:
+              raw.aboutCredentials && raw.aboutCredentials.length > 0
+                ? raw.aboutCredentials
+                : DEFAULT_SETTINGS.aboutCredentials,
           };
           setSettings(normalized);
         } else {
@@ -935,26 +943,48 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const saveSettings = useCallback(
     async (nextSettings: Omit<StoreSettings, 'updatedAt'>) => {
+      const merged: Omit<StoreSettings, 'updatedAt'> = {
+        ...settings,
+        ...nextSettings,
+      };
       const payload: Record<string, unknown> = {
-        storeName: nextSettings.storeName.trim().slice(0, 100),
-        whatsappNumber: nextSettings.whatsappNumber.replace(/\D/g, '').slice(0, 24),
-        instagramUrl: nextSettings.instagramUrl.trim().slice(0, 300),
-        contactEmail: nextSettings.contactEmail.trim().slice(0, 160),
-        businessHours: nextSettings.businessHours.trim().slice(0, 160),
-        heroTitle: nextSettings.heroTitle.trim().slice(0, 140),
-        heroSubtitle: nextSettings.heroSubtitle.trim().slice(0, 360),
-        freeShippingThreshold: Number(nextSettings.freeShippingThreshold || 0),
-        assistantName: nextSettings.assistantName.trim().slice(0, 60),
+        storeName: merged.storeName.trim().slice(0, 100),
+        whatsappNumber: merged.whatsappNumber.replace(/\D/g, '').slice(0, 24),
+        instagramUrl: merged.instagramUrl.trim().slice(0, 300),
+        contactEmail: merged.contactEmail.trim().slice(0, 160),
+        businessHours: merged.businessHours.trim().slice(0, 160),
+        heroTitle: merged.heroTitle.trim().slice(0, 140),
+        heroSubtitle: merged.heroSubtitle.trim().slice(0, 360),
+        freeShippingThreshold: Number(merged.freeShippingThreshold || 0),
+        assistantName: merged.assistantName.trim().slice(0, 60),
         updatedAt: serverTimestamp(),
       };
-      if (nextSettings.instagramHandle) {
-        payload.instagramHandle = nextSettings.instagramHandle.trim().slice(0, 60);
+      if (merged.instagramHandle) {
+        payload.instagramHandle = merged.instagramHandle.trim().slice(0, 60);
       }
-      if (nextSettings.categories) {
-        payload.categories = nextSettings.categories.map((c) => c.trim().slice(0, 80)).filter(Boolean);
+      if (merged.categories) {
+        payload.categories = merged.categories.map((c) => c.trim().slice(0, 80)).filter(Boolean).slice(0, 30);
       }
-      if (nextSettings.deletedMaterialIds) {
-        payload.deletedMaterialIds = nextSettings.deletedMaterialIds;
+      if (merged.deletedMaterialIds) {
+        payload.deletedMaterialIds = merged.deletedMaterialIds.slice(0, 200);
+      }
+      if (merged.aboutTitle !== undefined) {
+        payload.aboutTitle = merged.aboutTitle.trim().slice(0, 160);
+      }
+      if (merged.aboutSubtitle !== undefined) {
+        payload.aboutSubtitle = merged.aboutSubtitle.trim().slice(0, 300);
+      }
+      if (merged.aboutPhotoUrl !== undefined) {
+        payload.aboutPhotoUrl = merged.aboutPhotoUrl.trim().slice(0, 1000);
+      }
+      if (merged.aboutText !== undefined) {
+        payload.aboutText = merged.aboutText.trim().slice(0, 5000);
+      }
+      if (merged.aboutCredentials !== undefined) {
+        payload.aboutCredentials = merged.aboutCredentials
+          .map((c) => c.trim().slice(0, 200))
+          .filter(Boolean)
+          .slice(0, 12);
       }
 
       try {
@@ -964,7 +994,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         handleFirestoreError(error, OperationType.UPDATE, 'settings/store');
       }
     },
-    [showToast]
+    [settings, showToast]
   );
 
   const deleteMaterial = useCallback(

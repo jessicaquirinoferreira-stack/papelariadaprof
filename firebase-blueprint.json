@@ -153,7 +153,7 @@
     },
     "StoreSettings": {
       "title": "StoreSettings",
-      "description": "Public store configuration including WhatsApp, Instagram, hours, and hero copy.",
+      "description": "Public store configuration including WhatsApp, Instagram, hours, hero copy, categories, and Quem sou eu biography.",
       "type": "object",
       "properties": {
         "storeName": { "type": "string", "maxLength": 100 },
@@ -166,6 +166,13 @@
         "heroSubtitle": { "type": "string", "maxLength": 360 },
         "freeShippingThreshold": { "type": "number" },
         "assistantName": { "type": "string", "maxLength": 60 },
+        "categories": { "type": "array" },
+        "deletedMaterialIds": { "type": "array" },
+        "aboutTitle": { "type": "string", "maxLength": 160 },
+        "aboutSubtitle": { "type": "string", "maxLength": 300 },
+        "aboutPhotoUrl": { "type": "string", "maxLength": 1000 },
+        "aboutText": { "type": "string", "maxLength": 5000 },
+        "aboutCredentials": { "type": "array" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["storeName", "whatsappNumber", "instagramUrl", "contactEmail", "businessHours", "heroTitle", "heroSubtitle", "freeShippingThreshold", "assistantName", "updatedAt"]

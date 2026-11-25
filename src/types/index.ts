@@ -138,6 +138,11 @@ export interface StoreSettings {
   assistantName: string;
   categories?: string[];
   deletedMaterialIds?: string[];
+  aboutTitle?: string;
+  aboutSubtitle?: string;
+  aboutPhotoUrl?: string;
+  aboutText?: string;
+  aboutCredentials?: string[];
   updatedAt?: unknown;
 }
 

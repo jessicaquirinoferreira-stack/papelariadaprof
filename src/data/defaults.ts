@@ -7,6 +7,22 @@ export const PDF_CATEGORIES = [
   'PDF para Professoras',
 ] as const;
 
+export const DEFAULT_ABOUT_TEXT = `Olá! Sou a Professora Lilian, educadora apaixonada pelo universo da aprendizagem e pelo desenvolvimento infantil.
+
+Sou formada em Pedagogia pela UNIRP, desde 2018, e pós-graduada em Alfabetização e Letramento e Libras. Tenho mais de oito anos de experiência na área da educação, atuando diretamente com crianças da Educação Infantil e do Ensino Fundamental.
+
+Ao longo da minha trajetória, compreendi que cada criança possui seu próprio ritmo, suas habilidades e suas particularidades. Por isso, acredito em uma educação individualizada, acolhedora e significativa, que respeita o tempo de cada aluno e transforma dificuldades em conquistas.
+
+Atualmente, minha atuação profissional vai além da sala de aula. Trabalho com aulas particulares, sou responsável por um espaço pedagógico voltado ao desenvolvimento infantil.
+
+Como profissional da área busco oferecer estratégias e recursos que despertem o interesse em aprender, respeitando as necessidades individuais de cada aluno.
+
+Meu propósito é transformar a aprendizagem em uma experiência positiva, porque toda criança merece ser respeitada em seu processo de desenvolvimento e incentivada a alcançar seu melhor potencial.
+
+Com carinho,
+
+Professora Lilian`;
+
 export const DEFAULT_SETTINGS: StoreSettings = {
   storeName: 'Papelaria da Prof',
   whatsappNumber: '5517991996136',
@@ -20,6 +36,16 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   freeShippingThreshold: 0,
   assistantName: 'Prof. Lilian',
   categories: [...PDF_CATEGORIES],
+  aboutTitle: 'Quem sou eu – Professora Lilian',
+  aboutSubtitle: 'Educadora apaixonada pelo universo da aprendizagem e pelo desenvolvimento infantil.',
+  aboutPhotoUrl: 'https://plzvsxudksxuzbch.public.blob.vercel-storage.com/images/professora-lilian-foto.jpg',
+  aboutText: DEFAULT_ABOUT_TEXT,
+  aboutCredentials: [
+    'Pedagoga formada pela UNIRP (desde 2018)',
+    'Pós-graduada em Alfabetização e Letramento e Libras',
+    '+8 anos de experiência na Educação Infantil e Fundamental',
+    'Aulas particulares e Espaço Pedagógico Infantil',
+  ],
 };
 
 // Loja 100% digital em PDF (sem produtos físicos)

@@ -1,62 +1,226 @@
 import React, { useState } from 'react';
-import { CheckCircle2, Clock, FileText, Heart, Mail, Phone, Send, ShieldCheck } from 'lucide-react';
+import { motion } from 'motion/react';
+import {
+  BookOpen,
+  CheckCircle2,
+  Clock,
+  FileText,
+  GraduationCap,
+  Heart,
+  Mail,
+  MessageCircle,
+  Phone,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  Star,
+} from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { SafeImage } from '../components/SafeImage';
 import { BLOB_ASSETS } from '../data/assets';
+import { DEFAULT_ABOUT_TEXT } from '../data/defaults';
 
 export function AboutPage() {
-  const { navigate } = useStore();
+  const { navigate, settings } = useStore();
+
+  const title = settings.aboutTitle || 'Quem sou eu – Professora Lilian';
+  const subtitle =
+    settings.aboutSubtitle ||
+    'Educadora apaixonada pelo universo da aprendizagem e pelo desenvolvimento infantil.';
+  const photoUrl = settings.aboutPhotoUrl || BLOB_ASSETS.lilianPhoto;
+  const fullText = settings.aboutText || DEFAULT_ABOUT_TEXT;
+  const credentials = settings.aboutCredentials || [];
+
+  const paragraphs = fullText
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  const cleanWa = settings.whatsappNumber.replace(/\D/g, '');
+  const waHref = `https://wa.me/${cleanWa.startsWith('55') ? cleanWa : `55${cleanWa}`}`;
+
+  const pillStyles = [
+    'bg-[#FFF5FA] border-[#F8BBD7]',
+    'bg-[#F2FAFE] border-[#BEE6FB]',
+    'bg-[#FFFBEA] border-[#FAD663]',
+    'bg-[#F7F4FD] border-[#D7CBFA]',
+  ];
+
   return (
-    <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
-      <section className="bg-white rounded-[2rem] border-2 border-[#FCE1EE] overflow-hidden grid grid-cols-1 md:grid-cols-2 items-stretch shadow-sm">
-        <SafeImage
-          src={BLOB_ASSETS.aboutAtelier}
-          alt="Professora Lilian · Papelaria da Prof"
-          className="w-full h-full object-cover min-h-[280px] bg-[#FCE6F1]"
-        />
-        <div className="p-8 sm:p-10 flex flex-col justify-center space-y-4">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#E05899]">
-            Nossa História
-          </p>
-          <h1 className="font-display text-3xl font-bold text-[#3A2E45]">
-            Sobre a Papelaria da Prof · Prof. Lilian
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 space-y-10">
+      {/* Top playful banner */}
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="playful-dots rounded-[2.25rem] border-2 border-[#FCE1EE] overflow-hidden shadow-sm relative"
+      >
+        <div className="h-2.5 w-full bg-gradient-to-r from-[#F67BB4] via-[#FAD663] via-[#7ED082] to-[#6BBEEB]" />
+        <div className="px-6 sm:px-10 py-8 sm:py-10 text-center max-w-3xl mx-auto space-y-3">
+          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white border-2 border-[#F8BBD7] text-xs font-bold uppercase tracking-[0.14em] text-[#E05899] shadow-xs">
+            <Heart className="w-3.5 h-3.5" />
+            <span>Quem sou eu</span>
+          </span>
+          <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-[#3A2E45] text-balance leading-tight">
+            {title}
           </h1>
-          <p className="text-sm text-[#675975] leading-relaxed">
-            A Papelaria da Prof nasceu com o propósito de criar recursos pedagógicos em PDF prontos para imprimir e transformar o aprendizado. Cada material é feito com afeto por mim, Professora Lilian, para ajudar mamães e professoras no dia a dia.
-          </p>
-          <p className="text-sm text-[#675975] leading-relaxed">
-            Do início da alfabetização aos conteúdos de Português e Matemática do 1º ao 5º ano, nossos PDFs tornam cada momento de estudo muito mais leve, organizado e eficaz.
-          </p>
-          <div className="pt-2">
-            <button
-              type="button"
-              onClick={() => navigate('catalog')}
-              className="px-6 py-3.5 rounded-full candy-btn-yellow text-sm font-display font-bold cursor-pointer"
-            >
-              Conhecer Apostilas PDF
-            </button>
+          {subtitle && (
+            <p className="text-sm sm:text-base text-[#675975] font-medium leading-relaxed">
+              {subtitle}
+            </p>
+          )}
+        </div>
+      </motion.section>
+
+      {/* Main Portrait + Full Biography Card */}
+      <motion.section
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.05 }}
+        className="bg-white rounded-[2.25rem] border-2 border-[#FCE1EE] p-6 sm:p-10 shadow-sm"
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+          {/* Portrait Frame - 3:4 complete view without cropping */}
+          <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-24">
+            <div className="playful-dots rounded-[2rem] p-4 border-2 border-[#F8BBD7] shadow-sm">
+              <div className="w-full aspect-[3/4] rounded-[1.5rem] overflow-hidden bg-white border border-[#FCE1EE] flex items-center justify-center">
+                <SafeImage
+                  src={photoUrl}
+                  alt={title}
+                  className="w-full h-full object-contain object-center"
+                />
+              </div>
+              <div className="mt-4 bg-white/95 rounded-2xl p-3.5 border border-[#FCE1EE] flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#FCE6F1] flex items-center justify-center text-[#E05899] shrink-0">
+                  <GraduationCap className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-display text-sm font-bold text-[#3A2E45] truncate">
+                    Professora Lilian
+                  </p>
+                  <p className="text-xs text-[#675975]">
+                    Pedagoga · Alfabetização, Letramento e Libras
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Credentials Badges */}
+            {credentials.length > 0 && (
+              <div className="space-y-2.5">
+                {credentials.map((cred, idx) => (
+                  <div
+                    key={`${cred}-${idx}`}
+                    className={`rounded-2xl px-4 py-3 border-2 flex items-start gap-2.5 shadow-xs ${pillStyles[idx % pillStyles.length]}`}
+                  >
+                    <Star className="w-4 h-4 text-[#E05899] shrink-0 mt-0.5" />
+                    <span className="text-xs sm:text-sm font-semibold text-[#3A2E45] leading-snug">
+                      {cred}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Story Content */}
+          <div className="lg:col-span-7 flex flex-col justify-between space-y-6">
+            <div className="space-y-4">
+              {paragraphs.map((para, idx) => {
+                const isGreeting = idx === 0;
+                const isSignature =
+                  para === 'Com carinho,' ||
+                  para === 'Professora Lilian' ||
+                  para.toLowerCase().startsWith('com carinho');
+
+                if (isGreeting) {
+                  return (
+                    <div
+                      key={idx}
+                      className="rounded-3xl bg-[#FFF5FA] border-2 border-[#F8BBD7] p-5 text-[#3A2E45]"
+                    >
+                      <p className="font-display text-lg sm:text-xl font-bold leading-relaxed flex items-start gap-2.5">
+                        <Sparkles className="w-5 h-5 text-[#E05899] shrink-0 mt-1" />
+                        <span>{para}</span>
+                      </p>
+                    </div>
+                  );
+                }
+
+                if (isSignature) {
+                  return (
+                    <p
+                      key={idx}
+                      className={
+                        para === 'Professora Lilian'
+                          ? 'font-display text-xl font-bold text-[#E05899] pt-1'
+                          : 'text-sm font-semibold text-[#675975] italic pt-2'
+                      }
+                    >
+                      {para}
+                    </p>
+                  );
+                }
+
+                return (
+                  <p
+                    key={idx}
+                    className="text-sm sm:text-[15px] text-[#4E405D] leading-relaxed"
+                  >
+                    {para}
+                  </p>
+                );
+              })}
+            </div>
+
+            <div className="pt-4 border-t-2 border-[#FCE1EE] flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => navigate('catalog')}
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl candy-btn-pink text-sm font-display font-bold cursor-pointer"
+              >
+                <BookOpen className="w-4 h-4" />
+                <span>Conhecer Apostilas PDF</span>
+              </button>
+              <a
+                href={waHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl candy-btn-coral text-sm font-display font-bold"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Falar com a Prof. Lilian</span>
+              </a>
+            </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
+      {/* Pillars */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-3xl p-6 border-2 border-[#F8BBD7] space-y-2 shadow-sm">
           <Heart className="w-6 h-6 text-[#E05899]" />
-          <h2 className="font-display text-lg font-bold text-[#3A2E45]">Feito com Afeto</h2>
+          <h2 className="font-display text-lg font-bold text-[#3A2E45]">
+            Educação Individualizada
+          </h2>
           <p className="text-xs text-[#675975] leading-relaxed">
-            Atividades com visual acolhedor e didático para encantar as crianças nos estudos em casa ou na escola.
+            Cada criança possui seu próprio ritmo, habilidades e particularidades. Materiais pensados para acolher e incentivar.
           </p>
         </div>
         <div className="bg-white rounded-3xl p-6 border-2 border-[#BEE6FB] space-y-2 shadow-sm">
           <ShieldCheck className="w-6 h-6 text-[#2D8EC4]" />
-          <h2 className="font-display text-lg font-bold text-[#3A2E45]">1º ao 5º Ano & Alfabetização</h2>
+          <h2 className="font-display text-lg font-bold text-[#3A2E45]">
+            Prática Pedagógica Real
+          </h2>
           <p className="text-xs text-[#675975] leading-relaxed">
-            Apostilas estruturadas para Alfabetização nos Anos Iniciais, Português, Matemática e organização para professoras.
+            Mais de oito anos atuando na Educação Infantil, Ensino Fundamental, aulas particulares e espaço pedagógico infantil.
           </p>
         </div>
         <div className="bg-white rounded-3xl p-6 border-2 border-[#D7CBFA] space-y-2 shadow-sm">
           <FileText className="w-6 h-6 text-[#7C62CA]" />
-          <h2 className="font-display text-lg font-bold text-[#3A2E45]">100% Digital em PDF</h2>
+          <h2 className="font-display text-lg font-bold text-[#3A2E45]">
+            100% Digital em PDF
+          </h2>
           <p className="text-xs text-[#675975] leading-relaxed">
             Sem espera nem frete: seus arquivos ficam liberados na Área do Aluno para baixar e imprimir quando quiser.
           </p>

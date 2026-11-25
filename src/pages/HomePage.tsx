@@ -686,46 +686,125 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* SECTION 5: PROFESSORA LILIAN STORY & FAQ */}
+      {/* SECTION 5: QUEM SOU EU – PROFESSORA LILIAN & FAQ */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 space-y-12">
-        <div className="bg-white rounded-[2rem] border-2 border-[#FCE1EE] overflow-hidden grid grid-cols-1 lg:grid-cols-2 items-stretch shadow-sm">
-          <div className="bg-[#FCE6F1]">
-            <SafeImage
-              src={BLOB_ASSETS.aboutAtelier}
-              alt="Materiais da Professora Lilian"
-              className="w-full h-full object-cover min-h-[300px]"
-            />
-          </div>
-          <div className="p-8 sm:p-12 flex flex-col justify-center space-y-5">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#E05899]">
-              Com Carinho da Prof. Lilian
-            </p>
-            <h2 className="font-display text-3xl font-bold text-[#3A2E45] text-balance">
-              Recursos pedagógicos feitos por quem vive a sala de aula todos os dias
-            </h2>
-            <p className="text-sm text-[#675975] leading-relaxed">
-              Cada apostila em PDF nasce da prática real em sala de aula e no acompanhamento escolar. Meus materiais unem clareza didática, visual acolhedor e praticidade para ajudar mamães e professoras a ensinarem com leveza.
-            </p>
-            <div className="pt-2 flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => navigate('about')}
-                className="px-6 py-3.5 rounded-2xl candy-btn-pink text-sm font-bold cursor-pointer"
-              >
-                Conhecer Minha História
-              </button>
-              <a
-                href={waHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl candy-btn-coral text-sm font-bold"
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span>Falar no WhatsApp</span>
-              </a>
+        {(() => {
+          const aboutTitle = settings.aboutTitle || 'Quem sou eu – Professora Lilian';
+          const aboutSubtitle =
+            settings.aboutSubtitle ||
+            'Educadora apaixonada pelo universo da aprendizagem e pelo desenvolvimento infantil.';
+          const aboutPhoto = settings.aboutPhotoUrl || BLOB_ASSETS.lilianPhoto;
+          const aboutParagraphs = (settings.aboutText || '')
+            .split(/\n\s*\n/)
+            .map((p) => p.trim())
+            .filter(Boolean);
+          const previewParagraphs =
+            aboutParagraphs.length > 3 ? aboutParagraphs.slice(0, 3) : aboutParagraphs;
+          const credentials = settings.aboutCredentials || [];
+
+          return (
+            <div className="bg-white rounded-[2.25rem] border-2 border-[#FCE1EE] overflow-hidden shadow-sm relative">
+              <div className="h-2 w-full bg-gradient-to-r from-[#F67BB4] via-[#FAD663] to-[#6BBEEB]" />
+              <div className="grid grid-cols-1 lg:grid-cols-12 items-center gap-8 p-6 sm:p-10 lg:p-12">
+                {/* Portrait Column - Full photo completely visible */}
+                <div className="lg:col-span-5 flex flex-col items-center">
+                  <div className="w-full max-w-[340px] playful-dots p-3 sm:p-4 rounded-[2rem] border-2 border-[#F8BBD7] shadow-sm relative">
+                    <div className="w-full aspect-[3/4] rounded-[1.5rem] overflow-hidden bg-white border border-[#FCE1EE] flex items-center justify-center">
+                      <SafeImage
+                        src={aboutPhoto}
+                        alt={aboutTitle}
+                        className="w-full h-full object-contain object-center"
+                      />
+                    </div>
+                    <div className="mt-3 flex items-center justify-center gap-2 text-xs font-bold text-[#E05899]">
+                      <GraduationCap className="w-4 h-4" />
+                      <span>Pedagoga · UNIRP · +8 anos de experiência</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Biography & Credentials Column */}
+                <div className="lg:col-span-7 flex flex-col justify-center space-y-5">
+                  <div className="space-y-2">
+                    <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#FCE6F1] border border-[#F8BBD7] text-xs font-bold uppercase tracking-[0.14em] text-[#E05899]">
+                      <Heart className="w-3.5 h-3.5" />
+                      <span>Quem sou eu</span>
+                    </span>
+                    <h2 className="font-display text-3xl sm:text-4xl font-bold text-[#3A2E45] text-balance leading-tight">
+                      {aboutTitle}
+                    </h2>
+                    {aboutSubtitle && (
+                      <p className="text-sm sm:text-base font-semibold text-[#7C62CA]">
+                        {aboutSubtitle}
+                      </p>
+                    )}
+                  </div>
+
+                  {credentials.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {credentials.slice(0, 4).map((cred, idx) => {
+                        const colors = [
+                          'bg-[#FFF5FA] border-[#F8BBD7] text-[#3A2E45]',
+                          'bg-[#F2FAFE] border-[#BEE6FB] text-[#3A2E45]',
+                          'bg-[#FFFBEA] border-[#FAD663] text-[#3A2E45]',
+                          'bg-[#F7F4FD] border-[#D7CBFA] text-[#3A2E45]',
+                        ];
+                        return (
+                          <div
+                            key={`${cred}-${idx}`}
+                            className={`px-3.5 py-2.5 rounded-2xl border text-xs font-semibold flex items-start gap-2 ${colors[idx % colors.length]}`}
+                          >
+                            <Star className="w-3.5 h-3.5 text-[#E05899] shrink-0 mt-0.5" />
+                            <span>{cred}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <div className="space-y-3 text-sm text-[#675975] leading-relaxed">
+                    {previewParagraphs.length > 0 ? (
+                      previewParagraphs.map((para, i) => (
+                        <p key={i}>{para}</p>
+                      ))
+                    ) : (
+                      <p>
+                        Cada apostila em PDF nasce da prática real em sala de aula e no acompanhamento escolar, unindo clareza didática e afeto.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="pt-2 flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={() => navigate('about')}
+                      className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl candy-btn-pink text-sm font-bold cursor-pointer"
+                    >
+                      <span>Ler História Completa</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigate('catalog')}
+                      className="px-6 py-3.5 rounded-2xl candy-btn-yellow text-sm font-bold cursor-pointer"
+                    >
+                      Explorar Apostilas PDF
+                    </button>
+                    <a
+                      href={waHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl candy-btn-coral text-sm font-bold"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>Falar no WhatsApp</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          );
+        })()}
 
         {/* Interactive FAQ Accordion */}
         <div className="bg-white rounded-[2rem] p-6 sm:p-10 border-2 border-[#BEE6FB] space-y-6 shadow-sm">

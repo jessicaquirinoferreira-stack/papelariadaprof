@@ -24,7 +24,7 @@ export function Header() {
     { label: 'Catálogo PDF', target: 'catalog' },
     { label: 'Apostilas', target: 'apostilas' },
     { label: 'Área do Aluno', target: 'student' },
-    { label: 'Sobre', target: 'about' },
+    { label: 'Quem sou eu', target: 'about' },
     { label: 'Contato', target: 'contact' },
   ];
 

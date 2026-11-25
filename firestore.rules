@@ -171,7 +171,13 @@ service cloud.firestore {
 
     function isValidStoreSettings(data) {
       return data.keys().hasAll(['storeName', 'whatsappNumber', 'instagramUrl', 'contactEmail', 'businessHours', 'heroTitle', 'heroSubtitle', 'freeShippingThreshold', 'assistantName', 'updatedAt'])
-        && data.keys().hasOnly(['storeName', 'whatsappNumber', 'instagramUrl', 'instagramHandle', 'contactEmail', 'businessHours', 'heroTitle', 'heroSubtitle', 'freeShippingThreshold', 'assistantName', 'updatedAt'])
+        && data.keys().hasOnly([
+          'storeName', 'whatsappNumber', 'instagramUrl', 'instagramHandle',
+          'contactEmail', 'businessHours', 'heroTitle', 'heroSubtitle',
+          'freeShippingThreshold', 'assistantName', 'categories',
+          'deletedMaterialIds', 'aboutTitle', 'aboutSubtitle',
+          'aboutPhotoUrl', 'aboutText', 'aboutCredentials', 'updatedAt'
+        ])
         && data.storeName is string && data.storeName.size() >= 1 && data.storeName.size() <= 100
         && data.whatsappNumber is string && data.whatsappNumber.size() >= 8 && data.whatsappNumber.size() <= 24
         && data.instagramUrl is string && data.instagramUrl.size() <= 300
@@ -182,6 +188,13 @@ service cloud.firestore {
         && data.heroSubtitle is string && data.heroSubtitle.size() <= 360
         && data.freeShippingThreshold is number && data.freeShippingThreshold >= 0
         && data.assistantName is string && data.assistantName.size() <= 60
+        && (!('categories' in data) || (data.categories is list && data.categories.size() <= 30 && (data.categories.size() == 0 || data.categories[0] is string)))
+        && (!('deletedMaterialIds' in data) || (data.deletedMaterialIds is list && data.deletedMaterialIds.size() <= 200 && (data.deletedMaterialIds.size() == 0 || data.deletedMaterialIds[0] is string)))
+        && (!('aboutTitle' in data) || (data.aboutTitle is string && data.aboutTitle.size() <= 160))
+        && (!('aboutSubtitle' in data) || (data.aboutSubtitle is string && data.aboutSubtitle.size() <= 300))
+        && (!('aboutPhotoUrl' in data) || (data.aboutPhotoUrl is string && data.aboutPhotoUrl.size() <= 1000))
+        && (!('aboutText' in data) || (data.aboutText is string && data.aboutText.size() <= 5000))
+        && (!('aboutCredentials' in data) || (data.aboutCredentials is list && data.aboutCredentials.size() <= 12 && (data.aboutCredentials.size() == 0 || data.aboutCredentials[0] is string)))
         && data.updatedAt is timestamp;
     }
 

@@ -16,6 +16,8 @@ export const BLOB_ASSETS = {
   prodPlanner: `${VERCEL_BLOB_BASE}/images/prod-planner.svg`,
   prodAlfabetizacao: `${VERCEL_BLOB_BASE}/images/prod-alfabetizacao.svg`,
   assistant: `${VERCEL_BLOB_BASE}/images/assistente-prof-mel.png`,
+  lilianPhoto: `${VERCEL_BLOB_BASE}/images/professora-lilian-foto.jpg`,
+  lilianPhotoPostimg: 'https://i.postimg.cc/PxFgk2TJ/5517991996136-s-whatsapp-net-2A46835020BBB46E7261.jpg',
 } as const;
 
 export const BLOB_PDFS = {

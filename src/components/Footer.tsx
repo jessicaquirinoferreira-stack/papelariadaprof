@@ -81,7 +81,7 @@ export function Footer() {
             <ul className="space-y-2.5 text-sm text-[#675975]">
               <li>
                 <button type="button" onClick={() => navigate('about')} className="hover:text-[#E05899] transition-colors cursor-pointer">
-                  Sobre a Prof. Lilian
+                  Quem sou eu – Prof. Lilian
                 </button>
               </li>
               <li>

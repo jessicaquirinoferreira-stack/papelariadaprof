@@ -6,19 +6,22 @@ import {
   CheckCircle2,
   CreditCard,
   ExternalLink,
+  Heart,
   KeyRound,
   LogOut,
   Plus,
+  RotateCcw,
   Search,
   Settings,
   ShoppingCart,
+  Sparkles,
   Tag,
   Trash2,
   Upload,
   UserCheck,
 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
-import { PDF_CATEGORIES } from '../data/defaults';
+import { DEFAULT_ABOUT_TEXT, PDF_CATEGORIES } from '../data/defaults';
 import { FIREBASE_AUTH_PROVIDERS_URL, FIREBASE_AUTH_SETTINGS_URL } from '../lib/firebase';
 import {
   formatBRL,
@@ -37,6 +40,7 @@ type AdminTab =
   | 'unlock'
   | 'coupons'
   | 'categories'
+  | 'about'
   | 'settings';
 
 export function AdminPage() {
@@ -141,6 +145,29 @@ export function AdminPage() {
   const [editingCatOld, setEditingCatOld] = useState<string | null>(null);
   const [editingCatName, setEditingCatName] = useState('');
 
+  // Quem sou eu state
+  const [cfgAboutTitle, setCfgAboutTitle] = useState(
+    settings.aboutTitle || 'Quem sou eu – Professora Lilian'
+  );
+  const [cfgAboutSubtitle, setCfgAboutSubtitle] = useState(
+    settings.aboutSubtitle ||
+      'Educadora apaixonada pelo universo da aprendizagem e pelo desenvolvimento infantil.'
+  );
+  const [cfgAboutPhotoUrl, setCfgAboutPhotoUrl] = useState(
+    settings.aboutPhotoUrl || BLOB_ASSETS.lilianPhoto
+  );
+  const [cfgAboutText, setCfgAboutText] = useState(
+    settings.aboutText || DEFAULT_ABOUT_TEXT
+  );
+  const [cfgAboutCredentials, setCfgAboutCredentials] = useState<string[]>(
+    settings.aboutCredentials || []
+  );
+  const [newCredText, setNewCredText] = useState('');
+  const [editingCredIdx, setEditingCredIdx] = useState<number | null>(null);
+  const [editingCredVal, setEditingCredVal] = useState('');
+  const [uploadingAboutPhoto, setUploadingAboutPhoto] = useState(false);
+  const [savingAbout, setSavingAbout] = useState(false);
+
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCatName.trim()) return;
@@ -155,6 +182,50 @@ export function AdminPage() {
     setEditingCatName('');
   };
 
+  const persistCredentials = async (nextCredentials: string[], message: string) => {
+    const cleaned = nextCredentials.map((c) => c.trim()).filter(Boolean).slice(0, 12);
+    setCfgAboutCredentials(cleaned);
+    await saveSettings({
+      ...settings,
+      aboutTitle: cfgAboutTitle.trim() || 'Quem sou eu – Professora Lilian',
+      aboutSubtitle: cfgAboutSubtitle.trim(),
+      aboutPhotoUrl: cfgAboutPhotoUrl.trim() || BLOB_ASSETS.lilianPhoto,
+      aboutText: cfgAboutText.trim() || DEFAULT_ABOUT_TEXT,
+      aboutCredentials: cleaned,
+    });
+    showToast(message);
+  };
+
+  const handleAddCredential = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const val = newCredText.trim();
+    if (!val) return;
+    if (cfgAboutCredentials.length >= 12) {
+      showToast('Limite máximo de 12 destaques atingido.', 'error');
+      return;
+    }
+    await persistCredentials([...cfgAboutCredentials, val], 'Destaque adicionado!');
+    setNewCredText('');
+  };
+
+  const handleUpdateCredential = async (idx: number) => {
+    const val = editingCredVal.trim();
+    if (!val) return;
+    const next = cfgAboutCredentials.map((c, i) => (i === idx ? val : c));
+    await persistCredentials(next, 'Destaque atualizado!');
+    setEditingCredIdx(null);
+    setEditingCredVal('');
+  };
+
+  const handleDeleteCredential = async (idx: number) => {
+    const next = cfgAboutCredentials.filter((_, i) => i !== idx);
+    await persistCredentials(next, 'Destaque removido!');
+    if (editingCredIdx === idx) {
+      setEditingCredIdx(null);
+      setEditingCredVal('');
+    }
+  };
+
   useEffect(() => {
     setCfgStoreName(settings.storeName);
     setCfgWhatsapp(settings.whatsappNumber);
@@ -165,6 +236,14 @@ export function AdminPage() {
     setCfgHeroTitle(settings.heroTitle);
     setCfgHeroSubtitle(settings.heroSubtitle);
     setCfgAssistantName(settings.assistantName);
+    setCfgAboutTitle(settings.aboutTitle || 'Quem sou eu – Professora Lilian');
+    setCfgAboutSubtitle(
+      settings.aboutSubtitle ||
+        'Educadora apaixonada pelo universo da aprendizagem e pelo desenvolvimento infantil.'
+    );
+    setCfgAboutPhotoUrl(settings.aboutPhotoUrl || BLOB_ASSETS.lilianPhoto);
+    setCfgAboutText(settings.aboutText || DEFAULT_ABOUT_TEXT);
+    setCfgAboutCredentials(settings.aboutCredentials || []);
   }, [settings]);
 
   const handleAdminLogin = async (e: React.FormEvent) => {
@@ -509,6 +588,7 @@ export function AdminPage() {
     { id: 'unlock', label: 'Liberar Material', icon: <UserCheck className="w-4 h-4" /> },
     { id: 'coupons', label: 'Cupons', icon: <Tag className="w-4 h-4" /> },
     { id: 'categories', label: 'Categorias', icon: <Tag className="w-4 h-4" /> },
+    { id: 'about', label: 'Quem sou eu', icon: <Heart className="w-4 h-4" /> },
     { id: 'settings', label: 'Configurações', icon: <Settings className="w-4 h-4" /> },
   ];
 
@@ -1531,13 +1611,292 @@ export function AdminPage() {
         </div>
       )}
 
-      {/* 7. SETTINGS */}
+      {/* 7. QUEM SOU EU */}
+      {tab === 'about' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left: Photo preview & Vercel Blob Upload */}
+          <div className="lg:col-span-5 bg-white rounded-3xl p-6 border-2 border-[#FCE1EE] space-y-4 shadow-sm">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="font-display text-xl font-bold text-[#3A2E45]">
+                Foto da Professora Lilian
+              </h2>
+              <button
+                type="button"
+                onClick={() => setCfgAboutPhotoUrl(BLOB_ASSETS.lilianPhoto)}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#FFF9FB] border border-[#FCE1EE] text-[11px] font-bold text-[#E05899] hover:bg-[#FCE6F1] cursor-pointer"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Foto Oficial</span>
+              </button>
+            </div>
+
+            <div className="playful-dots p-3 rounded-[1.75rem] border-2 border-[#F8BBD7]">
+              <div className="w-full max-w-[300px] mx-auto aspect-[3/4] rounded-[1.25rem] overflow-hidden bg-white border border-[#FCE1EE] flex items-center justify-center">
+                <SafeImage
+                  src={cfgAboutPhotoUrl || BLOB_ASSETS.lilianPhoto}
+                  alt={cfgAboutTitle}
+                  className="w-full h-full object-contain object-center"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#3A2E45] mb-1.5">
+                Enviar nova foto para Vercel Blob
+              </label>
+              <label className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-2xl border-2 border-dashed border-[#F8BBD7] bg-[#FFF9FB] hover:bg-[#FCE6F1]/60 text-xs font-bold text-[#E05899] cursor-pointer transition-colors">
+                <Upload className="w-4 h-4" />
+                <span>
+                  {uploadingAboutPhoto
+                    ? 'Enviando foto para Vercel Blob...'
+                    : 'Selecionar Foto (JPG, PNG, WEBP)'}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploadingAboutPhoto}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setUploadingAboutPhoto(true);
+                    try {
+                      const uploaded = await uploadFileToStorage(file, 'images');
+                      setCfgAboutPhotoUrl(uploaded.url);
+                      showToast('Foto enviada para o Vercel Blob! Clique em Salvar para publicar.');
+                    } catch (err) {
+                      showToast(
+                        err instanceof Error ? err.message : 'Erro ao enviar foto.',
+                        'error'
+                      );
+                    } finally {
+                      setUploadingAboutPhoto(false);
+                      e.target.value = '';
+                    }
+                  }}
+                />
+              </label>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#3A2E45] mb-1">
+                URL da Foto
+              </label>
+              <input
+                type="url"
+                value={cfgAboutPhotoUrl}
+                onChange={(e) => setCfgAboutPhotoUrl(e.target.value)}
+                placeholder="https://..."
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-[#FFF9FB] border-2 border-[#FCE1EE] text-xs font-mono text-[#3A2E45]"
+              />
+            </div>
+
+            {/* Destaques / Formação (CRUD: Adicionar, Editar, Remover) */}
+            <div className="pt-4 border-t border-[#FCE1EE] space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-display text-base font-bold text-[#3A2E45] flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-[#E05899]" />
+                  <span>Destaques & Formação ({cfgAboutCredentials.length}/12)</span>
+                </h3>
+              </div>
+
+              <form onSubmit={handleAddCredential} className="flex gap-2">
+                <input
+                  type="text"
+                  value={newCredText}
+                  onChange={(e) => setNewCredText(e.target.value)}
+                  placeholder="Ex.: Pós-graduada em Libras"
+                  className="flex-1 px-3 py-2 rounded-xl bg-[#FFF9FB] border-2 border-[#FCE1EE] text-xs text-[#3A2E45]"
+                />
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-1 px-3.5 py-2 rounded-xl candy-btn-pink text-xs font-bold cursor-pointer shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Adicionar</span>
+                </button>
+              </form>
+
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                {cfgAboutCredentials.map((cred, idx) => {
+                  const isEditing = editingCredIdx === idx;
+                  return (
+                    <div
+                      key={`${cred}-${idx}`}
+                      className="p-2.5 rounded-2xl bg-[#FFF9FB] border border-[#FCE1EE] flex items-center justify-between gap-2"
+                    >
+                      {isEditing ? (
+                        <div className="flex-1 flex gap-1.5">
+                          <input
+                            type="text"
+                            value={editingCredVal}
+                            onChange={(e) => setEditingCredVal(e.target.value)}
+                            className="flex-1 px-2.5 py-1.5 rounded-xl bg-white border border-[#FCE1EE] text-xs"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateCredential(idx)}
+                            className="px-2.5 py-1.5 rounded-xl bg-[#7ED082] text-white text-[11px] font-bold cursor-pointer"
+                          >
+                            Salvar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingCredIdx(null);
+                              setEditingCredVal('');
+                            }}
+                            className="px-2.5 py-1.5 rounded-xl bg-gray-200 text-[11px] font-bold cursor-pointer"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <span className="text-xs font-medium text-[#3A2E45] leading-snug flex-1">
+                            {cred}
+                          </span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingCredIdx(idx);
+                                setEditingCredVal(cred);
+                              }}
+                              className="px-2.5 py-1 rounded-xl bg-white border border-[#BEE6FB] text-[11px] font-bold text-[#2D8EC4] hover:bg-[#E8F6FE] cursor-pointer"
+                            >
+                              Editar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCredential(idx)}
+                              className="p-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 cursor-pointer"
+                              title="Remover destaque"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+                {cfgAboutCredentials.length === 0 && (
+                  <p className="text-xs text-[#675975] italic">
+                    Nenhum destaque cadastrado. Adicione acima para exibir na seção Quem sou eu.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Biography & Headings Editor */}
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setSavingAbout(true);
+              try {
+                await saveSettings({
+                  ...settings,
+                  aboutTitle: cfgAboutTitle.trim() || 'Quem sou eu – Professora Lilian',
+                  aboutSubtitle: cfgAboutSubtitle.trim(),
+                  aboutPhotoUrl: cfgAboutPhotoUrl.trim() || BLOB_ASSETS.lilianPhoto,
+                  aboutText: cfgAboutText.trim() || DEFAULT_ABOUT_TEXT,
+                  aboutCredentials: cfgAboutCredentials,
+                });
+                showToast('Seção "Quem sou eu" atualizada no banco de dados e no site!');
+              } finally {
+                setSavingAbout(false);
+              }
+            }}
+            className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border-2 border-[#FCE1EE] space-y-5 shadow-sm"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="font-display text-xl font-bold text-[#3A2E45]">
+                  Editar Seção “Quem sou eu”
+                </h2>
+                <p className="text-xs text-[#675975] mt-0.5">
+                  As alterações aparecem imediatamente na página inicial e na página Quem sou eu do menu.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCfgAboutText(DEFAULT_ABOUT_TEXT)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#FFF9FB] border border-[#FCE1EE] text-xs font-bold text-[#7C62CA] hover:bg-[#F7F4FD] cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Restaurar Texto Padrão</span>
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#3A2E45] mb-1">
+                Título da Seção
+              </label>
+              <input
+                type="text"
+                required
+                value={cfgAboutTitle}
+                onChange={(e) => setCfgAboutTitle(e.target.value)}
+                placeholder="Quem sou eu – Professora Lilian"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-[#FFF9FB] border-2 border-[#FCE1EE] text-sm text-[#3A2E45]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#3A2E45] mb-1">
+                Subtítulo de Destaque
+              </label>
+              <input
+                type="text"
+                value={cfgAboutSubtitle}
+                onChange={(e) => setCfgAboutSubtitle(e.target.value)}
+                placeholder="Educadora apaixonada pelo universo da aprendizagem..."
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-[#FFF9FB] border-2 border-[#FCE1EE] text-sm text-[#3A2E45]"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-[#3A2E45]">
+                  Texto Completo (separe parágrafos com uma linha em branco)
+                </label>
+                <span className="text-[11px] text-[#675975]">
+                  {cfgAboutText.length}/5000 caracteres
+                </span>
+              </div>
+              <textarea
+                rows={14}
+                maxLength={5000}
+                required
+                value={cfgAboutText}
+                onChange={(e) => setCfgAboutText(e.target.value)}
+                className="w-full px-4 py-3 rounded-2xl bg-[#FFF9FB] border-2 border-[#FCE1EE] text-sm text-[#3A2E45] leading-relaxed"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <button
+                type="submit"
+                disabled={savingAbout}
+                className="px-7 py-3.5 rounded-2xl candy-btn-pink text-sm font-bold disabled:opacity-60 cursor-pointer"
+              >
+                {savingAbout ? 'Salvando...' : 'Salvar Seção Quem sou eu'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* 8. SETTINGS */}
       {tab === 'settings' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <form
             onSubmit={async (e) => {
               e.preventDefault();
               await saveSettings({
+                ...settings,
                 storeName: cfgStoreName,
                 whatsappNumber: cfgWhatsapp,
                 instagramUrl: cfgInstagramUrl,
