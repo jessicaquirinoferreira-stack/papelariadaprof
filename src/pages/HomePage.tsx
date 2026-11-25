@@ -255,7 +255,7 @@ export function HomePage() {
                   </h1>
 
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#9B82E6] mt-2">
-                    Papelaria da Prof · Professora Lilian
+                    Professora Lilian
                   </p>
 
                   <p className="text-sm sm:text-base font-medium text-[#3A2E45] mt-3 leading-relaxed">
