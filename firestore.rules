@@ -116,7 +116,7 @@ service cloud.firestore {
 
     function isValidStudentMaterial(data) {
       return data.keys().hasAll(['id', 'studentId', 'studentName', 'studentEmail', 'materialId', 'materialTitle', 'category', 'coverUrl', 'pdfUrl', 'pdfFileName', 'unlockedBy', 'unlockedAt'])
-        && data.keys().hasOnly(['id', 'studentId', 'studentName', 'studentEmail', 'materialId', 'materialTitle', 'category', 'coverUrl', 'pdfUrl', 'pdfFileName', 'orderRef', 'unlockedBy', 'unlockedAt'])
+        && data.keys().hasOnly(['id', 'studentId', 'studentName', 'studentEmail', 'materialId', 'materialTitle', 'category', 'coverUrl', 'pdfUrl', 'pdfFileName', 'orderId', 'orderRef', 'unlockedBy', 'unlockedAt'])
         && isValidId(data.id)
         && isValidId(data.studentId)
         && data.studentName is string && data.studentName.size() >= 1 && data.studentName.size() <= 140
@@ -127,6 +127,7 @@ service cloud.firestore {
         && data.coverUrl is string && data.coverUrl.size() <= 1000
         && data.pdfUrl is string && data.pdfUrl.size() >= 1 && data.pdfUrl.size() <= 1500
         && data.pdfFileName is string && data.pdfFileName.size() >= 1 && data.pdfFileName.size() <= 200
+        && (!('orderId' in data) || (data.orderId is string && data.orderId.size() <= 128))
         && (!('orderRef' in data) || (data.orderRef is string && data.orderRef.size() <= 80))
         && isValidId(data.unlockedBy)
         && data.unlockedAt is timestamp;
@@ -134,7 +135,13 @@ service cloud.firestore {
 
     function isValidOrder(data) {
       return data.keys().hasAll(['id', 'orderNumber', 'customerName', 'customerPhone', 'items', 'subtotal', 'shippingCost', 'discount', 'total', 'source', 'status', 'createdAt', 'updatedAt'])
-        && data.keys().hasOnly(['id', 'orderNumber', 'customerId', 'customerName', 'customerPhone', 'customerEmail', 'cep', 'address', 'items', 'subtotal', 'shippingCost', 'discount', 'couponCode', 'total', 'paymentMethod', 'source', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'id', 'orderNumber', 'customerId', 'customerName', 'customerPhone', 'customerEmail',
+          'cep', 'address', 'items', 'materialIds', 'subtotal', 'shippingCost', 'discount',
+          'couponCode', 'installments', 'interestAmount', 'total', 'paymentMethod',
+          'paymentProvider', 'paymentSlug', 'paymentUrl', 'paymentTransactionNsu',
+          'paymentReceiptUrl', 'paymentCaptureMethod', 'source', 'status', 'createdAt', 'updatedAt'
+        ])
         && isValidId(data.id)
         && data.orderNumber is string && data.orderNumber.size() >= 1 && data.orderNumber.size() <= 40
         && (!('customerId' in data) || (data.customerId is string && data.customerId.size() <= 128))
@@ -144,12 +151,21 @@ service cloud.firestore {
         && (!('cep' in data) || (data.cep is string && data.cep.size() <= 12))
         && (!('address' in data) || (data.address is string && data.address.size() <= 300))
         && data.items is list && data.items.size() >= 1 && data.items.size() <= 50 && data.items[0] is map
+        && (!('materialIds' in data) || (data.materialIds is list && data.materialIds.size() <= 50 && (data.materialIds.size() == 0 || data.materialIds[0] is string)))
         && data.subtotal is number && data.subtotal >= 0
         && data.shippingCost is number && data.shippingCost >= 0
         && data.discount is number && data.discount >= 0
         && (!('couponCode' in data) || (data.couponCode is string && data.couponCode.size() <= 40))
+        && (!('installments' in data) || (data.installments is number && data.installments >= 1 && data.installments <= 12))
+        && (!('interestAmount' in data) || (data.interestAmount is number && data.interestAmount >= 0))
         && data.total is number && data.total >= 0
-        && (!('paymentMethod' in data) || (data.paymentMethod is string && data.paymentMethod.size() <= 50))
+        && (!('paymentMethod' in data) || (data.paymentMethod is string && data.paymentMethod.size() <= 80))
+        && (!('paymentProvider' in data) || (data.paymentProvider in ['infinitepay', 'whatsapp', 'pdv']))
+        && (!('paymentSlug' in data) || (data.paymentSlug is string && data.paymentSlug.size() <= 120))
+        && (!('paymentUrl' in data) || (data.paymentUrl is string && data.paymentUrl.size() <= 500))
+        && (!('paymentTransactionNsu' in data) || (data.paymentTransactionNsu is string && data.paymentTransactionNsu.size() <= 128))
+        && (!('paymentReceiptUrl' in data) || (data.paymentReceiptUrl is string && data.paymentReceiptUrl.size() <= 500))
+        && (!('paymentCaptureMethod' in data) || (data.paymentCaptureMethod is string && data.paymentCaptureMethod.size() <= 40))
         && data.source in ['online', 'pdv']
         && data.status in ['pending', 'paid', 'shipped', 'completed', 'cancelled']
         && data.createdAt is timestamp
@@ -270,7 +286,13 @@ service cloud.firestore {
       allow delete: if isValidId(materialId) && isAdmin();
 
       match /private/{docId} {
-        allow get: if isValidId(materialId) && isValidId(docId) && isAdmin();
+        allow get: if isValidId(materialId) && isValidId(docId) && (
+          isAdmin()
+          || (
+            isSignedIn()
+            && exists(/databases/$(database)/documents/student_materials/$(request.auth.uid + '_' + materialId))
+          )
+        );
         allow list: if isAdmin();
         allow create, update: if isValidId(materialId)
           && isValidId(docId)
@@ -286,17 +308,46 @@ service cloud.firestore {
       allow get: if isValidId(grantId) && isSignedIn() && (existing().studentId == request.auth.uid || isAdmin());
       allow list: if isSignedIn() && (resource.data.studentId == request.auth.uid || isAdmin());
       allow create: if isValidId(grantId)
-        && isAdmin()
         && isValidStudentMaterial(incoming())
         && incoming().id == grantId
         && exists(/databases/$(database)/documents/materials/$(incoming().materialId))
-        && incoming().unlockedAt == request.time;
+        && incoming().unlockedAt == request.time
+        && (
+          isAdmin()
+          || (
+            isSignedIn()
+            && incoming().studentId == request.auth.uid
+            && incoming().unlockedBy == request.auth.uid
+            && grantId == request.auth.uid + '_' + incoming().materialId
+            && 'orderId' in incoming()
+            && isValidId(incoming().orderId)
+            && exists(/databases/$(database)/documents/orders/$(incoming().orderId))
+            && get(/databases/$(database)/documents/orders/$(incoming().orderId)).data.customerId == request.auth.uid
+            && get(/databases/$(database)/documents/orders/$(incoming().orderId)).data.status == 'paid'
+            && 'materialIds' in get(/databases/$(database)/documents/orders/$(incoming().orderId)).data
+            && incoming().materialId in get(/databases/$(database)/documents/orders/$(incoming().orderId)).data.materialIds
+            && (
+              incoming().pdfUrl == 'resolving://private-file'
+              || incoming().pdfUrl.matches('^https://plzvsxudksxuzbch\\.public\\.blob\\.vercel-storage\\.com/pdfs/.*')
+            )
+          )
+        );
       allow update: if isValidId(grantId)
-        && isAdmin()
         && isValidStudentMaterial(incoming())
         && incoming().id == existing().id
         && incoming().studentId == existing().studentId
-        && incoming().materialId == existing().materialId;
+        && incoming().materialId == existing().materialId
+        && (
+          isAdmin()
+          || (
+            isSignedIn()
+            && existing().studentId == request.auth.uid
+            && incoming().diff(existing()).affectedKeys().hasOnly(['pdfUrl', 'pdfFileName'])
+            && exists(/databases/$(database)/documents/materials/$(existing().materialId)/private/file)
+            && incoming().pdfUrl == get(/databases/$(database)/documents/materials/$(existing().materialId)/private/file).data.pdfUrl
+            && incoming().pdfFileName == get(/databases/$(database)/documents/materials/$(existing().materialId)/private/file).data.pdfFileName
+          )
+        );
       allow delete: if isValidId(grantId) && isAdmin();
     }
 
@@ -317,11 +368,38 @@ service cloud.firestore {
           )
         );
       allow update: if isValidId(orderId)
-        && isAdmin()
         && isValidOrder(incoming())
         && incoming().id == existing().id
         && incoming().createdAt == existing().createdAt
-        && incoming().updatedAt == request.time;
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin()
+          || (
+            isSignedIn()
+            && existing().customerId == request.auth.uid
+            && existing().status == 'pending'
+            && incoming().status == 'paid'
+            && incoming().paymentProvider == 'infinitepay'
+            && 'paymentSlug' in existing()
+            && incoming().paymentSlug == existing().paymentSlug
+            && 'paymentTransactionNsu' in incoming()
+            && incoming().paymentTransactionNsu is string
+            && incoming().paymentTransactionNsu.size() >= 4
+            && 'paymentReceiptUrl' in incoming()
+            && incoming().paymentReceiptUrl is string
+            && incoming().paymentReceiptUrl.size() >= 10
+            && incoming().orderNumber == existing().orderNumber
+            && incoming().customerId == existing().customerId
+            && incoming().items == existing().items
+            && incoming().subtotal == existing().subtotal
+            && incoming().shippingCost == existing().shippingCost
+            && incoming().discount == existing().discount
+            && incoming().total == existing().total
+            && incoming().source == existing().source
+            && (!('materialIds' in existing()) || incoming().materialIds == existing().materialIds)
+            && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'paymentTransactionNsu', 'paymentReceiptUrl', 'paymentCaptureMethod', 'paymentMethod', 'updatedAt'])
+          )
+        );
       allow delete: if isValidId(orderId) && isAdmin();
     }
 

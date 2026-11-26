@@ -107,7 +107,14 @@ interface StoreContextValue {
 
   // Orders & Coupons
   validateCoupon: (code: string, subtotal: number) => { valid: boolean; coupon?: Coupon; discount: number; message: string };
-  createOrder: (orderInput: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Order>;
+  createOrder: (orderInput: Omit<Order, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }) => Promise<Order>;
+  verifyAndUnlockInfinitePayOrder: (params: {
+    orderId: string;
+    slug?: string;
+    transactionNsu?: string;
+    receiptUrl?: string;
+    captureMethod?: string;
+  }) => Promise<{ paid: boolean; unlockedCount: number; order?: Order }>;
 
   // Admin data & actions
   adminStudents: StudentProfile[];
@@ -807,14 +814,27 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   );
 
   const createOrder = useCallback(
-    async (orderInput: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<Order> => {
-      const id = slugId('ord');
+    async (
+      orderInput: Omit<Order, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
+    ): Promise<Order> => {
+      const id = orderInput.id ? orderInput.id.slice(0, 128) : slugId('ord');
+      const materialIds =
+        orderInput.materialIds ??
+        Array.from(
+          new Set(
+            orderInput.items
+              .filter((i) => i.type === 'material')
+              .map((i) => i.id)
+          )
+        ).slice(0, 50);
+
       const payload: Record<string, unknown> = {
         id,
         orderNumber: orderInput.orderNumber.slice(0, 40),
         customerName: orderInput.customerName.trim().slice(0, 140),
         customerPhone: orderInput.customerPhone.trim().slice(0, 30),
         items: orderInput.items.slice(0, 50),
+        materialIds,
         subtotal: Number(orderInput.subtotal),
         shippingCost: Number(orderInput.shippingCost),
         discount: Number(orderInput.discount),
@@ -829,17 +849,252 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (orderInput.cep) payload.cep = orderInput.cep.slice(0, 12);
       if (orderInput.address) payload.address = orderInput.address.slice(0, 300);
       if (orderInput.couponCode) payload.couponCode = orderInput.couponCode.slice(0, 40);
-      if (orderInput.paymentMethod) payload.paymentMethod = orderInput.paymentMethod.slice(0, 50);
+      if (typeof orderInput.installments === 'number') payload.installments = orderInput.installments;
+      if (typeof orderInput.interestAmount === 'number') payload.interestAmount = orderInput.interestAmount;
+      if (orderInput.paymentMethod) payload.paymentMethod = orderInput.paymentMethod.slice(0, 80);
+      if (orderInput.paymentProvider) payload.paymentProvider = orderInput.paymentProvider;
+      if (orderInput.paymentSlug) payload.paymentSlug = orderInput.paymentSlug.slice(0, 120);
+      if (orderInput.paymentUrl) payload.paymentUrl = orderInput.paymentUrl.slice(0, 500);
+      if (orderInput.paymentTransactionNsu) payload.paymentTransactionNsu = orderInput.paymentTransactionNsu.slice(0, 128);
+      if (orderInput.paymentReceiptUrl) payload.paymentReceiptUrl = orderInput.paymentReceiptUrl.slice(0, 500);
+      if (orderInput.paymentCaptureMethod) payload.paymentCaptureMethod = orderInput.paymentCaptureMethod.slice(0, 40);
 
       try {
         await setDoc(doc(db, 'orders', id), payload);
-        return { ...orderInput, id };
+        return { ...orderInput, materialIds, id };
       } catch (error) {
         handleFirestoreError(error, OperationType.CREATE, `orders/${id}`);
       }
     },
     []
   );
+
+  const verifyAndUnlockInfinitePayOrder = useCallback(
+    async ({
+      orderId,
+      slug,
+      transactionNsu,
+      receiptUrl,
+      captureMethod,
+    }: {
+      orderId: string;
+      slug?: string;
+      transactionNsu?: string;
+      receiptUrl?: string;
+      captureMethod?: string;
+    }): Promise<{ paid: boolean; unlockedCount: number; order?: Order }> => {
+      if (!firebaseUser) {
+        return { paid: false, unlockedCount: 0 };
+      }
+
+      const orderRef = doc(db, 'orders', orderId);
+      const orderSnap = await getDoc(orderRef);
+      if (!orderSnap.exists()) {
+        return { paid: false, unlockedCount: 0 };
+      }
+      const orderData = orderSnap.data() as Order;
+
+      // Verify payment with backend server against InfinitePay API
+      const checkResp = await fetch('/api/infinitepay/check-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId,
+          slug: slug || orderData.paymentSlug,
+          transactionNsu: transactionNsu || orderData.paymentTransactionNsu,
+          receiptUrl: receiptUrl || orderData.paymentReceiptUrl,
+        }),
+      });
+      if (!checkResp.ok) {
+        return { paid: false, unlockedCount: 0, order: orderData };
+      }
+
+      const checkJson = (await checkResp.json()) as {
+        paid?: boolean;
+        record?: {
+          transactionNsu?: string;
+          receiptUrl?: string;
+          captureMethod?: string;
+          installments?: number;
+        };
+      };
+
+      const isConfirmedPaid = checkJson.paid === true || orderData.status === 'paid' || orderData.status === 'completed';
+      if (!isConfirmedPaid) {
+        return { paid: false, unlockedCount: 0, order: orderData };
+      }
+
+      const resolvedNsu =
+        checkJson.record?.transactionNsu ||
+        transactionNsu ||
+        orderData.paymentTransactionNsu ||
+        `ip-${orderId}`;
+      const resolvedReceipt =
+        checkJson.record?.receiptUrl ||
+        receiptUrl ||
+        orderData.paymentReceiptUrl ||
+        'https://checkout.infinitepay.io';
+      const resolvedMethod =
+        checkJson.record?.captureMethod ||
+        captureMethod ||
+        orderData.paymentCaptureMethod ||
+        (orderData.paymentMethod?.toLowerCase().includes('pix') ? 'pix' : 'credit_card');
+
+      let latestOrder: Order = orderData;
+      if (orderData.status === 'pending' && orderData.customerId === firebaseUser.uid) {
+        const paymentLabel =
+          resolvedMethod === 'pix'
+            ? 'Pix · InfinitePay (Pago)'
+            : `Cartão ${orderData.installments || checkJson.record?.installments || 1}x · InfinitePay (Pago)`;
+        await updateDoc(orderRef, {
+          status: 'paid',
+          paymentTransactionNsu: resolvedNsu.slice(0, 128),
+          paymentReceiptUrl: resolvedReceipt.slice(0, 500),
+          paymentCaptureMethod: resolvedMethod.slice(0, 40),
+          paymentMethod: paymentLabel.slice(0, 80),
+          updatedAt: serverTimestamp(),
+        });
+        latestOrder = {
+          ...orderData,
+          status: 'paid',
+          paymentTransactionNsu: resolvedNsu,
+          paymentReceiptUrl: resolvedReceipt,
+          paymentCaptureMethod: resolvedMethod,
+          paymentMethod: paymentLabel,
+        };
+      }
+
+      // Unlock each purchased PDF material in student_materials
+      let unlockedCount = 0;
+      const buyerName = (
+        studentProfile?.fullName ||
+        orderData.customerName ||
+        firebaseUser.displayName ||
+        'Aluna'
+      ).slice(0, 140);
+      const buyerEmail = (
+        studentProfile?.email ||
+        orderData.customerEmail ||
+        firebaseUser.email ||
+        ''
+      ).slice(0, 200);
+
+      for (const item of orderData.items) {
+        if (item.type !== 'material') continue;
+        const grantId = `${firebaseUser.uid}_${item.id}`
+          .replace(/[^a-zA-Z0-9_-]/g, '_')
+          .slice(0, 250);
+
+        const matMeta = materials.find((m) => m.id === item.id);
+        const defaultFile = DEFAULT_MATERIAL_FILES[item.id];
+        const initialPdfUrl =
+          defaultFile?.pdfUrl || 'resolving://private-file';
+        const initialPdfName =
+          defaultFile?.pdfFileName || `${item.id}.pdf`;
+
+        const existingGrantSnap = await getDoc(doc(db, 'student_materials', grantId));
+        if (!existingGrantSnap.exists()) {
+          await setDoc(doc(db, 'student_materials', grantId), {
+            id: grantId,
+            studentId: firebaseUser.uid,
+            studentName: buyerName,
+            studentEmail: buyerEmail,
+            materialId: item.id,
+            materialTitle: (matMeta?.title || item.title).slice(0, 160),
+            category: (matMeta?.category || 'Apostila PDF').slice(0, 80),
+            coverUrl: (matMeta?.coverUrl || item.imageUrl || '').slice(0, 1000),
+            pdfUrl: initialPdfUrl.slice(0, 1500),
+            pdfFileName: initialPdfName.slice(0, 200),
+            orderId: orderData.id,
+            orderRef: orderData.orderNumber.slice(0, 80),
+            unlockedBy: firebaseUser.uid,
+            unlockedAt: serverTimestamp(),
+          });
+        }
+
+        // Hydrate exact latest PDF URL from materials/{materialId}/private/file if stored
+        try {
+          const privSnap = await getDoc(
+            doc(db, 'materials', item.id, 'private', 'file')
+          );
+          if (privSnap.exists()) {
+            const privData = privSnap.data() as MaterialFile;
+            if (privData.pdfUrl) {
+              await updateDoc(doc(db, 'student_materials', grantId), {
+                pdfUrl: privData.pdfUrl.slice(0, 1500),
+                pdfFileName: (privData.pdfFileName || initialPdfName).slice(0, 200),
+              });
+            }
+          }
+        } catch {
+          // If no private/file doc exists yet, defaultFile pdfUrl remains active
+        }
+
+        unlockedCount += 1;
+      }
+
+      return { paid: true, unlockedCount, order: latestOrder };
+    },
+    [firebaseUser, studentProfile, materials]
+  );
+
+  // Detect return from InfinitePay checkout redirect_url
+  useEffect(() => {
+    if (!authReady || !firebaseUser) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment_return') !== 'infinitepay') return;
+
+    const orderId = params.get('order_id') || params.get('order_nsu') || '';
+    const slug = params.get('slug') || '';
+    const transactionNsu = params.get('transaction_nsu') || '';
+    const receiptUrl = params.get('receipt_url') || '';
+    const captureMethod = params.get('capture_method') || '';
+
+    // Clean query string immediately
+    window.history.replaceState({}, '', window.location.pathname);
+
+    if (!orderId) return;
+
+    (async () => {
+      try {
+        const res = await verifyAndUnlockInfinitePayOrder({
+          orderId,
+          slug,
+          transactionNsu,
+          receiptUrl,
+          captureMethod,
+        });
+        if (res.paid) {
+          clearCart();
+          try {
+            localStorage.removeItem('papelaria_prof_pending_infinitepay');
+          } catch {
+            // ignore
+          }
+          showToast(
+            'Pagamento confirmado na InfinitePay! Seus PDFs já estão liberados para download!'
+          );
+          navigate('student');
+        } else {
+          showToast(
+            'Pagamento em processamento na InfinitePay. Verifique na Área do Aluno em instantes.',
+            'info'
+          );
+          navigate('student');
+        }
+      } catch (err) {
+        console.error('InfinitePay return verify error:', err);
+        showToast('Erro ao confirmar retorno da InfinitePay.', 'error');
+      }
+    })();
+  }, [
+    authReady,
+    firebaseUser,
+    verifyAndUnlockInfinitePayOrder,
+    clearCart,
+    showToast,
+    navigate,
+  ]);
 
   // Admin actions
   const saveProduct = useCallback(
@@ -1275,6 +1530,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     updateStudentProfile,
     validateCoupon,
     createOrder,
+    verifyAndUnlockInfinitePayOrder,
     adminStudents,
     adminOrders,
     adminCoupons,

@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   BookOpen,
+  Clock,
   Download,
   ExternalLink,
   History,
   LogOut,
+  RefreshCw,
   Save,
   User as UserIcon,
 } from 'lucide-react';
@@ -21,6 +23,7 @@ export function StudentAreaPage() {
     studentProfile,
     studentMaterials,
     studentOrders,
+    verifyAndUnlockInfinitePayOrder,
     loginWithGoogle,
     registerStudent,
     loginStudentWithEmail,
@@ -52,6 +55,75 @@ export function StudentAreaPage() {
   const [profName, setProfName] = useState('');
   const [profPhone, setProfPhone] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
+
+  // InfinitePay verification state
+  const [checkingOrderId, setCheckingOrderId] = useState<string | null>(null);
+  const autoCheckedOrdersRef = useRef<Set<string>>(new Set());
+
+  const pendingInfinitePayOrders = useMemo(
+    () =>
+      studentOrders.filter(
+        (o) => o.paymentProvider === 'infinitepay' && o.status === 'pending'
+      ),
+    [studentOrders]
+  );
+
+  useEffect(() => {
+    if (!firebaseUser || pendingInfinitePayOrders.length === 0) return;
+
+    let cancelled = false;
+    (async () => {
+      for (const ord of pendingInfinitePayOrders) {
+        if (cancelled) break;
+        if (autoCheckedOrdersRef.current.has(ord.id)) continue;
+        autoCheckedOrdersRef.current.add(ord.id);
+        try {
+          const res = await verifyAndUnlockInfinitePayOrder({
+            orderId: ord.id,
+            slug: ord.paymentSlug,
+            transactionNsu: ord.paymentTransactionNsu,
+            receiptUrl: ord.paymentReceiptUrl,
+            captureMethod: ord.paymentCaptureMethod,
+          });
+          if (!cancelled && res.paid && res.unlockedCount > 0) {
+            showToast(
+              `Pagamento do pedido ${ord.orderNumber} confirmado! Seus PDFs foram liberados!`
+            );
+          }
+        } catch {
+          // Allow manual retry
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [firebaseUser, pendingInfinitePayOrders, verifyAndUnlockInfinitePayOrder, showToast]);
+
+  const handleManualCheckOrder = async (ordId: string, orderNumber: string, slug?: string) => {
+    setCheckingOrderId(ordId);
+    try {
+      const res = await verifyAndUnlockInfinitePayOrder({
+        orderId: ordId,
+        slug,
+      });
+      if (res.paid) {
+        showToast(
+          `Pagamento do pedido ${orderNumber} confirmado! PDFs liberados para download!`
+        );
+      } else {
+        showToast(
+          'Pagamento ainda consta como pendente na InfinitePay. Conclua o checkout e tente novamente em instantes.',
+          'info'
+        );
+      }
+    } catch {
+      showToast('Não foi possível consultar a InfinitePay agora.', 'error');
+    } finally {
+      setCheckingOrderId(null);
+    }
+  };
 
   useEffect(() => {
     if (studentProfile) {
@@ -469,7 +541,77 @@ export function StudentAreaPage() {
 
       {/* Tab 1: Unlocked PDFs */}
       {dashTab === 'materials' && (
-        <section>
+        <section className="space-y-6">
+          {pendingInfinitePayOrders.length > 0 && (
+            <div className="bg-[#FFF9E6] rounded-3xl p-5 sm:p-6 border-2 border-[#FAD663] space-y-3 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#FAD663] text-[#3A2E45] flex items-center justify-center shrink-0">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div className="flex-1 space-y-1">
+                  <h2 className="font-display text-base font-bold text-[#3A2E45]">
+                    {pendingInfinitePayOrders.length === 1
+                      ? 'Você tem 1 pedido aguardando confirmação na InfinitePay'
+                      : `Você tem ${pendingInfinitePayOrders.length} pedidos aguardando confirmação na InfinitePay`}
+                  </h2>
+                  <p className="text-xs text-[#675975]">
+                    Assim que o pagamento no Pix ou Cartão for aprovado, clique em verificar para liberar suas apostilas em PDF imediatamente.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {pendingInfinitePayOrders.map((ord) => (
+                  <div
+                    key={ord.id}
+                    className="bg-white rounded-2xl p-3.5 border border-[#FAD663]/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                  >
+                    <div>
+                      <p className="font-mono font-bold text-[#3A2E45]">
+                        {ord.orderNumber} · {formatBRL(ord.total)}
+                      </p>
+                      <p className="text-[#675975]">
+                        {ord.items.map((i) => `${i.quantity}x ${i.title}`).join(', ')}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {ord.paymentUrl && (
+                        <a
+                          href={ord.paymentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl candy-btn-yellow font-bold"
+                        >
+                          <span>Abrir Pagamento InfinitePay</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                      <button
+                        type="button"
+                        disabled={checkingOrderId === ord.id}
+                        onClick={() =>
+                          handleManualCheckOrder(ord.id, ord.orderNumber, ord.paymentSlug)
+                        }
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl candy-btn-purple font-bold disabled:opacity-50 cursor-pointer"
+                      >
+                        <RefreshCw
+                          className={`w-3.5 h-3.5 ${
+                            checkingOrderId === ord.id ? 'animate-spin' : ''
+                          }`}
+                        />
+                        <span>
+                          {checkingOrderId === ord.id
+                            ? 'Verificando...'
+                            : 'Verificar Pagamento e Liberar PDFs'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {studentMaterials.length === 0 ? (
             <div className="bg-white rounded-3xl p-10 text-center border-2 border-[#FCE1EE] space-y-4 shadow-sm">
               <div className="w-14 h-14 rounded-3xl bg-[#FCE6F1] text-[#E05899] flex items-center justify-center mx-auto">
@@ -480,7 +622,7 @@ export function StudentAreaPage() {
                   Nenhuma apostila liberada ainda
                 </h2>
                 <p className="text-sm text-[#675975] leading-relaxed">
-                  Após comprar uma apostila exclusiva e confirmar o pedido no WhatsApp, a Papelaria da Prof libera o PDF imediatamente aqui para você baixar.
+                  Após concluir o pagamento via Pix ou Cartão na InfinitePay, suas apostilas em PDF são liberadas automaticamente aqui para você baixar.
                 </p>
               </div>
               <button
@@ -493,48 +635,58 @@ export function StudentAreaPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {studentMaterials.map((grant) => (
-                <article
-                  key={grant.id}
-                  className="soft-card rounded-3xl overflow-hidden border-2 border-[#FCE1EE] flex flex-col"
-                >
-                  <div className="h-2 bg-[#9B82E6]" />
-                  <div className="aspect-[4/3] bg-[#FFF9FB] overflow-hidden">
-                    <SafeImage
-                      src={grant.coverUrl}
-                      alt={grant.materialTitle}
-                      fallbackTitle={grant.materialTitle}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="p-5 flex-1 flex flex-col justify-between gap-4">
-                    <div>
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-[#E05899]">
-                        {grant.category} · Liberado em {formatTimestamp(grant.unlockedAt)}
-                      </p>
-                      <h3 className="font-display text-lg font-bold text-[#3A2E45] mt-1">
-                        {grant.materialTitle}
-                      </h3>
-                      {grant.orderRef && (
-                        <p className="text-xs text-[#675975] mt-1">
-                          Referência: {grant.orderRef}
+              {studentMaterials.map((grant) => {
+                const isResolving = !grant.pdfUrl || grant.pdfUrl.startsWith('resolving://');
+                return (
+                  <article
+                    key={grant.id}
+                    className="soft-card rounded-3xl overflow-hidden border-2 border-[#FCE1EE] flex flex-col"
+                  >
+                    <div className="h-2 bg-[#9B82E6]" />
+                    <div className="aspect-[4/3] bg-[#FFF9FB] overflow-hidden">
+                      <SafeImage
+                        src={grant.coverUrl}
+                        alt={grant.materialTitle}
+                        fallbackTitle={grant.materialTitle}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="p-5 flex-1 flex flex-col justify-between gap-4">
+                      <div>
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-[#E05899]">
+                          {grant.category} · Liberado em {formatTimestamp(grant.unlockedAt)}
                         </p>
+                        <h3 className="font-display text-lg font-bold text-[#3A2E45] mt-1">
+                          {grant.materialTitle}
+                        </h3>
+                        {grant.orderRef && (
+                          <p className="text-xs text-[#675975] mt-1">
+                            Referência: {grant.orderRef}
+                          </p>
+                        )}
+                      </div>
+
+                      {isResolving ? (
+                        <span className="inline-flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-[#FFF9FB] border-2 border-[#FCE1EE] text-xs font-bold text-[#675975]">
+                          <RefreshCw className="w-4 h-4 animate-spin text-[#9B82E6]" />
+                          <span>Sincronizando PDF...</span>
+                        </span>
+                      ) : (
+                        <a
+                          href={grant.pdfUrl}
+                          download={grant.pdfFileName}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center gap-2 py-3 px-4 rounded-2xl candy-btn-purple text-xs font-bold"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span>Baixar Apostila PDF</span>
+                        </a>
                       )}
                     </div>
-
-                    <a
-                      href={grant.pdfUrl}
-                      download={grant.pdfFileName}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-2 py-3 px-4 rounded-2xl candy-btn-purple text-xs font-bold"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span>Baixar Apostila PDF</span>
-                    </a>
-                  </div>
-                </article>
-              ))}
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
@@ -569,16 +721,20 @@ export function StudentAreaPage() {
                           {formatTimestamp(g.unlockedAt)}
                         </td>
                         <td className="py-3 text-right">
-                          <a
-                            href={g.pdfUrl}
-                            download={g.pdfFileName}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[#9B82E6] font-bold hover:underline"
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                            <span>Baixar</span>
-                          </a>
+                          {!g.pdfUrl || g.pdfUrl.startsWith('resolving://') ? (
+                            <span className="text-[#675975] font-semibold">Sincronizando...</span>
+                          ) : (
+                            <a
+                              href={g.pdfUrl}
+                              download={g.pdfFileName}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[#9B82E6] font-bold hover:underline"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span>Baixar</span>
+                            </a>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -608,12 +764,61 @@ export function StudentAreaPage() {
                       <p className="text-[#675975] mt-0.5">
                         {ord.items.map((i) => `${i.quantity}x ${i.title}`).join(', ')}
                       </p>
+                      {ord.paymentMethod && (
+                        <p className="text-[11px] text-[#675975] mt-0.5">{ord.paymentMethod}</p>
+                      )}
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-wrap items-center gap-3">
                       <span className="font-mono tabular-nums font-bold text-[#3A2E45]">
                         {formatBRL(ord.total)}
                       </span>
-                      <span className="text-[#E05899] font-bold uppercase">{ord.status}</span>
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
+                          ord.status === 'paid' || ord.status === 'completed'
+                            ? 'bg-[#DDF7E8] text-[#176942]'
+                            : 'bg-[#FFF3CC] text-[#7B5A00]'
+                        }`}
+                      >
+                        {ord.status === 'paid'
+                          ? 'Pago'
+                          : ord.status === 'completed'
+                            ? 'Concluído'
+                            : ord.status === 'pending'
+                              ? 'Pendente'
+                              : ord.status}
+                      </span>
+                      {ord.paymentProvider === 'infinitepay' && ord.status === 'pending' && (
+                        <>
+                          {ord.paymentUrl && (
+                            <a
+                              href={ord.paymentUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#FAD663] text-[#3A2E45] font-bold hover:brightness-95"
+                            >
+                              <span>Abrir Checkout</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+                          <button
+                            type="button"
+                            disabled={checkingOrderId === ord.id}
+                            onClick={() =>
+                              handleManualCheckOrder(ord.id, ord.orderNumber, ord.paymentSlug)
+                            }
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#9B82E6] text-white font-bold disabled:opacity-50 cursor-pointer"
+                          >
+                            <RefreshCw
+                              className={`w-3 h-3 ${
+                                checkingOrderId === ord.id ? 'animate-spin' : ''
+                              }`}
+                            />
+                            <span>
+                              {checkingOrderId === ord.id ? 'Verificando...' : 'Verificar'}
+                            </span>
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}

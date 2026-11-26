@@ -48,9 +48,7 @@ export default async function handler(req: MulterRequest, res: ServerResponse) {
       return;
     }
 
-    const blobToken =
-      process.env.BLOB_READ_WRITE_TOKEN ||
-      'vercel_blob_rw_PlzVSXUdkSXuzBcH_cMJWFamh4JkVWz2DBQedYqKOSb8isB';
+    const blobToken = process.env.BLOB_READ_WRITE_TOKEN || '';
     if (!blobToken) {
       sendJson(res, 503, {
         error:
