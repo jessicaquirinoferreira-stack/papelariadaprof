@@ -853,7 +853,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (typeof orderInput.interestAmount === 'number') payload.interestAmount = orderInput.interestAmount;
       if (orderInput.paymentMethod) payload.paymentMethod = orderInput.paymentMethod.slice(0, 80);
       if (orderInput.paymentProvider) payload.paymentProvider = orderInput.paymentProvider;
-      if (orderInput.paymentSlug) payload.paymentSlug = orderInput.paymentSlug.slice(0, 120);
+      if (orderInput.paymentSlug !== undefined || orderInput.paymentProvider === 'infinitepay') {
+        payload.paymentSlug = (orderInput.paymentSlug || '').slice(0, 120);
+      }
       if (orderInput.paymentUrl) payload.paymentUrl = orderInput.paymentUrl.slice(0, 500);
       if (orderInput.paymentTransactionNsu) payload.paymentTransactionNsu = orderInput.paymentTransactionNsu.slice(0, 128);
       if (orderInput.paymentReceiptUrl) payload.paymentReceiptUrl = orderInput.paymentReceiptUrl.slice(0, 500);

@@ -26,6 +26,15 @@ import { formatBRL, maskPhone, slugId } from '../lib/utils';
 import { Order } from '../types';
 import { SafeImage } from '../components/SafeImage';
 
+function extractInfinitePaySlug(checkoutUrl: string): string {
+  try {
+    const segments = new URL(checkoutUrl).pathname.split('/').filter(Boolean);
+    return segments.length >= 2 ? segments[1].slice(0, 120) : '';
+  } catch {
+    return '';
+  }
+}
+
 export function CheckoutPage() {
   const {
     cart,
@@ -206,7 +215,7 @@ export function CheckoutPage() {
         };
 
         if (!cancelled && resp.ok && data.url) {
-          const slug = data.slug || data.url.split('/').filter(Boolean).pop() || '';
+          const slug = data.slug || extractInfinitePaySlug(data.url);
           setPreparedCheckout({
             signature: checkoutSignature,
             orderId,
@@ -564,20 +573,28 @@ export function CheckoutPage() {
           }),
         });
 
-        const checkoutJson = (await checkoutResp.json().catch(() => ({}))) as {
+        const rawRespText = await checkoutResp.text();
+        let checkoutJson: {
           url?: string;
           slug?: string;
           error?: string;
-        };
+        } = {};
+        try {
+          checkoutJson = JSON.parse(rawRespText);
+        } catch {
+          // ignore non-json
+        }
 
         if (!checkoutResp.ok || !checkoutJson.url) {
           throw new Error(
-            checkoutJson.error || 'Não foi possível gerar o link de pagamento InfinitePay.'
+            checkoutJson.error ||
+              (rawRespText && rawRespText.length < 180 ? rawRespText : '') ||
+              'Não foi possível gerar o link de pagamento InfinitePay.'
           );
         }
 
         checkoutUrl = checkoutJson.url;
-        slug = checkoutJson.slug || checkoutUrl.split('/').filter(Boolean).pop() || '';
+        slug = checkoutJson.slug || extractInfinitePaySlug(checkoutUrl);
       }
 
       const savedOrder = await persistOrderForSession({

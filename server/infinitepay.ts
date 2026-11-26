@@ -162,11 +162,6 @@ function buildInfinitePayItemsCents(
 
 export async function createInfinitePayCheckoutLink(input: CreateCheckoutInput) {
   const { apiKey, handle } = getInfinitePayConfig();
-  if (!apiKey) {
-    throw new Error(
-      'Chave da InfinitePay (INFINITEPAY_API_KEY) não configurada no servidor.'
-    );
-  }
 
   const safeOrderId = String(input.orderId || '').replace(/[^a-zA-Z0-9_-]/g, '');
   if (!safeOrderId) {
@@ -213,12 +208,16 @@ export async function createInfinitePayCheckoutLink(input: CreateCheckoutInput) 
     payload.customer = cust;
   }
 
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (apiKey) {
+    headers['X-Api-Key'] = apiKey;
+  }
+
   const response = await fetch(INFINITEPAY_CHECKOUT_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Api-Key': apiKey,
-    },
+    headers,
     body: JSON.stringify(payload),
   });
 
@@ -239,7 +238,15 @@ export async function createInfinitePayCheckoutLink(input: CreateCheckoutInput) 
     );
   }
 
-  const slug = checkoutUrl.split('/').filter(Boolean).pop() || '';
+  let slug = '';
+  try {
+    const segments = new URL(checkoutUrl).pathname.split('/').filter(Boolean);
+    if (segments.length >= 2) {
+      slug = segments[1].slice(0, 120);
+    }
+  } catch {
+    slug = '';
+  }
 
   return {
     url: checkoutUrl,
@@ -322,25 +329,26 @@ export async function verifyInfinitePayPayment(params: {
   }
 
   const { apiKey, handle } = getInfinitePayConfig();
-  if (!apiKey) {
-    throw new Error('INFINITEPAY_API_KEY não configurada no servidor.');
-  }
 
   const bodyPayload: Record<string, string> = {
     handle,
     order_nsu: orderNsu,
   };
-  if (params.slug) bodyPayload.slug = String(params.slug).trim();
-  if (params.transactionNsu) {
+  if (params.slug && params.slug.trim()) bodyPayload.slug = String(params.slug).trim();
+  if (params.transactionNsu && params.transactionNsu.trim()) {
     bodyPayload.transaction_nsu = String(params.transactionNsu).trim();
+  }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (apiKey) {
+    headers['X-Api-Key'] = apiKey;
   }
 
   const response = await fetch(INFINITEPAY_PAYMENT_CHECK_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Api-Key': apiKey,
-    },
+    headers,
     body: JSON.stringify(bodyPayload),
   });
 
